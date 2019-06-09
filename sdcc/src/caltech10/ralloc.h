@@ -27,68 +27,63 @@
 #ifndef SDCCRALLOC_H
 #define SDCCRALLOC_H 1
 
-#define DEBUG_FAKE_EXTRA_REGS 	0
-
-#define USE_OLDSALLOC 0 // Change to 1 to use old stack allocator
-
 enum
-{
-  A_IDX = 0,
-  C_IDX,
-  B_IDX,
-  E_IDX,
-  D_IDX,
-  L_IDX,
-  H_IDX,
-  IYL_IDX,
-  IYH_IDX,
-#if DEBUG_FAKE_EXTRA_REGS
-  M_IDX,
-  N_IDX,
-  O_IDX,
-  P_IDX,
-  Q_IDX,
-  R_IDX,
-  S_IDX,
-  T_IDX,
-#endif
-  CND_IDX,
+  {
+    A_IDX,
+    X_IDX,
+    H_IDX,
+    HX_IDX,
+    XA_IDX,
+    CND_IDX,
+    SP_IDX
+  };
 
-  // These pairs are for internal use in code generation only.
-  IY_IDX,
-  BC_IDX,
-  DE_IDX,
-  HL_IDX
-};
 
-enum
-{
-  REG_PTR = 1,
-  REG_GPR = 2,
-  REG_CND = 4,
-  REG_PAIR = 8
-};
+#define REG_PTR 0x01
+#define REG_GPR 0x02
+#define REG_CND 0x04
 
+/* Must preserve the relation HC08MASK_H > HC08MASK_X > MC08MASK_A  */
+/* so that HC08MASK_REV can be automatically applied when reversing */
+/* the usual register pair ordering. */
+#define HC08MASK_A 0x01
+#define HC08MASK_X 0x02
+#define HC08MASK_H 0x04
+#define HC08MASK_REV 0x08
+#define HC08MASK_XA (HC08MASK_X | HC08MASK_A)
+#define HC08MASK_HX (HC08MASK_H | HC08MASK_X)
+#define HC08MASK_AX (HC08MASK_REV | HC08MASK_X | HC08MASK_A)
+    
 /* definition for the registers */
 typedef struct reg_info
-{
-  short type;                   /* can have value 
-                                   REG_GPR, REG_PTR or REG_CND */
-  short rIdx;                   /* index into register table */
-  char *name;                   /* name */
-  unsigned isFree:1;            /* is currently unassigned  */
-} reg_info;
+  {
+    short type;			/* can have value 
+				   REG_GPR, REG_PTR or REG_CND */
+    short rIdx;			/* index into register table */
+    char *name;			/* name */
+    short mask;			/* bitmask for pair allocation */
+    struct asmop *aop;		/* last operand */
+    int aopofs;			/* last operand offset */
+    unsigned isFree:1;		/* is currently unassigned */
+    unsigned isDead:1;      /* does not need to survive current instruction */
+    unsigned isLitConst:1;      /* has an literal constant loaded */
+    int litConst;		/* last literal constant */
+  }
+reg_info;
+extern reg_info regshc08[];
+extern reg_info *hc08_reg_a;
+extern reg_info *hc08_reg_x;
+extern reg_info *hc08_reg_h;
+extern reg_info *hc08_reg_hx;
+extern reg_info *hc08_reg_xa;
+extern reg_info *hc08_reg_sp;
 
-extern reg_info *regsZ80;
+reg_info *hc08_regWithIdx (int);
+void hc08_useReg (reg_info * reg);
+void hc08_freeReg (reg_info * reg);
+void hc08_dirtyReg (reg_info * reg, bool freereg);
+bitVect *hc08_rUmaskForOp (operand * op);
 
-void assignRegisters (eBBlock **, int);
-reg_info *regWithIdx (int);
+iCode *hc08_ralloc2_cc(ebbIndex *ebbi);
 
-void z80_assignRegisters (ebbIndex *);
-bitVect *z80_rUmaskForOp (const operand * op);
-
-void z80SpillThis (symbol *);
-iCode *z80_ralloc2_cc(ebbIndex *ebbi);
-
-void Z80RegFix (eBBlock ** ebbs, int count);
 #endif

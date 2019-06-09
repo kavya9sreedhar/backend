@@ -1,5 +1,5 @@
 /*-------------------------------------------------------------------------
-  SDCCgen51.h - header file for code generation for 8051
+  gen.h - header file for code generation for hc(s)08
 
              Written By -  Sandeep Dutta . sandeep.dutta@usa.net (1998)
 
@@ -16,77 +16,80 @@
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
    Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+   
+   In other words, you are welcome to use, share and improve this program.
+   You are forbidden to forbid anyone else to use, share and improve
+   what you give them.   Help stamp out software-hoarding!  
 -------------------------------------------------------------------------*/
 
-#ifndef Z80GEN_H
-#define Z80GEN_H
+#ifndef SDCCGENHC08_H
+#define SDCCGENHC08_H
 
-typedef enum
-{
-  AOP_INVALID,
-  /* Is a literal */
-  AOP_LIT = 1,
-  /* Is in a register */
-  AOP_REG,
-  /* Is in direct space */
-  AOP_DIR,
-  /* SFR space ($FF00 and above) */
-  AOP_SFR,
-  /* Is on the stack */
-  AOP_STK,
-  /* Is an immediate value */
-  AOP_IMMD,
-  /* Is a string (?) */
-  AOP_STR,
-  /* Is in the carry register */
-  AOP_CRY,
-  /* Is pointed to by IY */
-  AOP_IY,
-  /* Is pointed to by HL */
-  AOP_HL,
-  /* Is in H and L */
-  AOP_HLREG,
-  /* Is in the extended stack pointer (IY on the Z80) */
-  AOP_EXSTK,
-  /* Is referenced by a pointer in a register pair. */
-  AOP_PAIRPTR,
-  /* Read undefined, discard writes */
-  AOP_DUMMY
-}
-AOP_TYPE;
+enum
+  {
+    AOP_LIT = 1,
+    AOP_REG, AOP_DIR,
+    AOP_STK, AOP_IMMD, AOP_STR,
+    AOP_CRY, 
+    AOP_EXT, AOP_SOF, AOP_DUMMY, AOP_IDX
+  };
+
+enum
+  {
+    ACCUSE_XA = 1,
+    ACCUSE_HX
+  };
 
 /* type asmop : a homogenised type for 
    all the different spaces an operand can be
    in */
 typedef struct asmop
-{
-  AOP_TYPE type;
-  short coff;                   /* current offset */
-  short size;                   /* total size */
-  unsigned code:1;              /* is in Code space */
-  unsigned paged:1;             /* in paged memory  */
-  unsigned freed:1;             /* already freed    */
-  unsigned bcInUse:1;           /* for banked I/O, which uses bc for the I/O address */
-  union
   {
-    value *aop_lit;             /* if literal */
-    reg_info *aop_reg[4];       /* array of registers */
-    char *aop_dir;              /* if direct  */
-    char *aop_immd;             /* if immediate others are implied */
-    int aop_stk;                /* stack offset when AOP_STK */
-    const char *aop_str[4];     /* just a string array containing the location */
-    int aop_pairId;             /* The pair ID */
+
+    short type;			
+    /* can have values
+       AOP_LIT    -  operand is a literal value
+       AOP_REG    -  is in registers
+       AOP_DIR    -  operand using direct addressing mode
+       AOP_STK    -  should be pushed on stack this
+       can happen only for the result
+       AOP_IMMD   -  immediate value for eg. remateriazable 
+       AOP_CRY    -  carry contains the value of this
+       AOP_STR    -  array of strings
+       AOP_SOF    -  operand at an offset on the stack
+       AOP_EXT    -  operand using extended addressing mode
+       AOP_IDX    -  operand using indexed addressing mode
+    */
+    short regmask;              /* register mask if AOP_REG */
+    short coff;			/* current offset */
+    short size;			/* total size */
+    operand *op;		/* originating operand */
+    unsigned code:1;		/* is in Code space */
+    unsigned freed:1;		/* already freed    */
+    unsigned stacked:1;		/* partial results stored on stack */
+    struct asmop *stk_aop[4];	/* asmops for the results on the stack */
+    union
+      {
+	value *aop_lit;		/* if literal */
+	reg_info *aop_reg[4];	/* array of registers */
+	char *aop_dir;		/* if direct  */
+	struct {
+		char *aop_immd1;	/* if immediate others are implied */
+		char *aop_immd2;	/* cast remat will generate this   */
+	} aop_immd;
+	int aop_stk;		/* stack offset when AOP_STK */
+      }
+    aopu;
   }
-  aopu;
-  signed char regs[9]; // Byte of this aop that is in the register. -1 if no byte of this aop is in the reg.
-}
 asmop;
 
-void genZ80Code (iCode *);
-void z80_emitDebuggerSymbol (const char *);
+void genhc08Code (iCode *);
+void hc08_emitDebuggerSymbol (const char *);
 
-extern bool z80_assignment_optimal;
-extern bool should_omit_frame_ptr;
+extern unsigned fReturnSizeHC08;
+
+iCode *hasInchc08 (operand *op, const iCode *ic, int osize);
+extern bool hc08_assignment_optimal;
 
 #endif
 
