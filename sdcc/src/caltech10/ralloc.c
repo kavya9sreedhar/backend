@@ -68,20 +68,12 @@ reg_info regshc08[] =
 
   {REG_GPR, A_IDX,   "a",  HC08MASK_A,  NULL, 0, 1},
   {REG_GPR, X_IDX,   "x",  HC08MASK_X,  NULL, 0, 1},
-  {REG_GPR, H_IDX,   "h",  HC08MASK_H,  NULL, 0, 1},
-  {REG_PTR, HX_IDX,  "hx", HC08MASK_HX, NULL, 0, 1},
-  {REG_GPR, XA_IDX,  "xa", HC08MASK_XA, NULL, 0, 1},
-
-  {REG_CND, CND_IDX, "C",  0, NULL, 0, 1},
   {0,       SP_IDX,  "sp", 0, NULL, 0, 1},
 };
 int hc08_nRegs = 7;
 
 reg_info *hc08_reg_a;
 reg_info *hc08_reg_x;
-reg_info *hc08_reg_h;
-reg_info *hc08_reg_hx;
-reg_info *hc08_reg_xa;
 reg_info *hc08_reg_sp;
 
 static void spillThis (symbol *);
@@ -131,24 +123,6 @@ hc08_freeReg (reg_info * reg)
         if (hc08_reg_h->isFree)
           hc08_reg_hx->isFree = 1;
         break;
-      case H_IDX:
-        if (hc08_reg_x->isFree)
-          hc08_reg_hx->isFree = 1;
-        break;
-      case HX_IDX:
-        hc08_reg_h->isFree = 1;
-        hc08_reg_x->isFree = 1;
-        if (hc08_reg_a->isFree)
-          hc08_reg_xa->isFree = 1;
-        break;
-      case XA_IDX:
-        hc08_reg_x->isFree = 1;
-        hc08_reg_a->isFree = 1;
-        if (hc08_reg_h->isFree)
-          hc08_reg_hx->isFree = 1;
-        break;
-      default:
-        break;
     }
 }
 
@@ -172,22 +146,6 @@ hc08_useReg (reg_info * reg)
         hc08_reg_xa->isFree = 0;
         hc08_reg_hx->aop = NULL;
         hc08_reg_hx->isFree = 0;
-        break;
-      case H_IDX:
-        hc08_reg_hx->aop = NULL;
-        hc08_reg_hx->isFree = 0;
-        break;
-      case HX_IDX:
-        hc08_reg_h->aop = NULL;
-        hc08_reg_h->isFree = 0;
-        hc08_reg_x->aop = NULL;
-        hc08_reg_x->isFree = 0;
-        break;
-      case XA_IDX:
-        hc08_reg_x->aop = NULL;
-        hc08_reg_x->isFree = 0;
-        hc08_reg_a->aop = NULL;
-        hc08_reg_a->isFree = 0;
         break;
       default:
         break;
@@ -217,28 +175,6 @@ hc08_dirtyReg (reg_info * reg, bool freereg)
 	hc08_reg_hx->isLitConst = 0;
 	hc08_reg_x->aop = NULL;
 	hc08_reg_x->isLitConst = 0;
-        break;
-      case H_IDX:
-        hc08_reg_hx->aop = NULL;
-	hc08_reg_hx->isLitConst = 0;
-	hc08_reg_h->aop = NULL;
-	hc08_reg_h->isLitConst = 0;
-        break;
-      case HX_IDX:
-        hc08_reg_hx->aop = NULL;
-	hc08_reg_hx->isLitConst = 0;
-        hc08_reg_h->aop = NULL;
-	hc08_reg_h->isLitConst = 0;
-        hc08_reg_x->aop = NULL;
-	hc08_reg_x->isLitConst = 0;
-        break;
-      case XA_IDX:
-        hc08_reg_xa->aop = NULL;
-	hc08_reg_xa->isLitConst = 0;
-        hc08_reg_x->aop = NULL;
-	hc08_reg_x->isLitConst = 0;
-        hc08_reg_a->aop = NULL;
-	hc08_reg_a->isLitConst = 0;
         break;
       default:
         break;
