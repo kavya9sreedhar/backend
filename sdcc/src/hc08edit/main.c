@@ -74,6 +74,57 @@ static char *_hc08_keywords[] =
   NULL
 };
 
+// tags for far, near, xstack, code generic pointers
+struct
+{
+    int tag_far;
+    int tag_near;
+    int tag_xstack;
+    int tag_code;
+}
+gp_tags;
+
+// memory regions related stuff
+struct
+{
+    const char *const xstack_name;
+    const char *const istack_name;
+    const char *code_name;
+    const char *data_name;
+    /* i think the following should work instead? unclear
+    const char *const code_name;
+    const cahr *const data_name; */
+    const char *const idata_name;
+    const char *const pdata_name;
+    const char *const xdata_name;
+    const char *const bit_name;
+    const char *const reg_name;
+    const char *const static_name;
+    const char *const overlay_name;
+    const char *const post_static_name;
+    const char *const home_name;
+    const char *const xidata_name;
+    const char *const xinit_name;
+    const char *const const_name;
+    const char *const cabs_name;
+    const char *const xabs_name;
+    const char *const iabs_name;
+    const char *const initialized_name;
+    const char *const initializer_name;
+
+    struct memmap *default_local_map;
+    struct memmap *default_globl_map;
+    int code_ro;
+    unsigned int maxextalign;
+}
+mem;
+
+struct
+{
+    void (*genExtraAreaDeclaration) (FILE *, bool);
+    void (*genExtraAreaLinkOptions) (FILE *);
+}
+extraAreas;
 
 void hc08_assignRegisters (ebbIndex *);
 
@@ -592,7 +643,7 @@ hc08_instructionSize(const char *inst, const char *op1, const char *op2)
   int size;
   long offset;
   char * endnum = NULL;
-  
+
   opcode = bsearch (inst, hc08opcodeDataTable,
                     sizeof(hc08opcodeDataTable)/sizeof(hc08opcodedata),
                     sizeof(hc08opcodedata), hc08_opcodeCompare);
@@ -603,15 +654,15 @@ hc08_instructionSize(const char *inst, const char *op1, const char *op2)
     {
       case HC08OP_INH: /* Inherent addressing mode */
         return 1;
-        
+
       case HC08OP_BSC: /* Bit set/clear direct addressing mode */
       case HC08OP_BR:  /* Branch (1 byte signed offset) */
       case HC08OP_IM1: /* 1 byte immediate addressing mode */
         return 2;
-        
+
       case HC08OP_BTB:  /* Bit test direct addressing mode and branch */
         return 3;
-        
+
       case HC08OP_RMW: /* read/modify/write instructions */
         if (!op2[0]) /* if not ,x or ,sp must be direct addressing mode */
           return 2;
@@ -620,7 +671,7 @@ hc08_instructionSize(const char *inst, const char *op1, const char *op2)
         if (op2[0] == 'x')  /* if ,x with offset */
           return 2;
         return 3;  /* Otherwise, must be ,sp with offset */
-        
+
       case HC08OP_STD: /* standard instruction */
         if (!op2[0])
           {
@@ -1055,4 +1106,3 @@ PORT s08_port =
   3,                            /* Number of registers handled in the tree-decomposition-based register allocator in SDCCralloc.hpp */
   PORT_MAGIC
 };
-
