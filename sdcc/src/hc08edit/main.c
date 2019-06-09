@@ -44,6 +44,111 @@ static char _s08_defaultRules[] =
 
 HC08_OPTS hc08_opts;
 
+typedef struct
+{
+  /** Unique id for this target */
+  const int id;
+  /** Target name used for -m */
+  const char *const target;
+
+  /** Target name string, used for --help */
+  const char *const target_name;
+
+  /** Specific processor for the given target family, specified by -p */
+  char *processor;
+
+  struct
+  {
+    /** Pointer to glue function */
+    void {*do_glue} {void};
+    /** TRUE if all types of glue functions should be inserted into the file that
+        also defines main.
+        We don't want this in cases like the z80 where the startup code is provided
+        by a seperate moule.
+    */
+
+    bool glue_up_main;
+    /* OR of MODEL_* */
+    int supported_models;
+    int default_model;
+    /** return the model string, used as library destination;
+        port->target is used as model string if get_model is NULL */
+    const char *(*get_model) (void);
+  }
+  general;
+
+  /* assembler related information */
+  struct
+  {
+    /** Command to run and arguments (eg as-z80) */
+    const char **cmd;
+    /** alternate macro based form */
+    const char *mcmd;
+    /** arguments for debug mode */
+    const char *debug_opts;
+    /** arguments for normal assembly mode */
+    const char *plain_opts;
+    /* print externs as global */
+    int externGlobal;
+    /* assembler file extension */
+    const char *file_ext;
+    /** if non-null will be used to execute the assembler */
+    void (*do_assemble) (set *);
+  }
+  assembler;
+}
+
+/* linked related info */
+struct
+{
+  /** command to run (eg link-z80) */
+  const char **cmd;
+  /** alternate macro based form */
+  const char *mcmd;
+  /** if non-null will be used to execute the link */
+  void (*do_link) (void);
+  /** extension for object files (.rel, .obj, ...) */
+  const char *rel_ext;
+  /** 1 if port needs the .lnk file, 0 otherwise */
+  const int needLinkerScript;
+  const char *const *crt;
+  const char *const *libs;
+}
+linker;
+
+/** default peephole rules */
+struct
+{
+  char *default_rules;
+  int (*getSize) (lineNode * line);
+  bitVect *(*getRegsRead) (lineNode * line);
+  bitVect *(*getRegsWritten) (lineNode * line);
+  bool (*deadMove) (const char *reg, lineNode * currpl, lineNode * head);
+  bool (*notUsed) (const char *reg, lineNode * currPl, lineNode * head);
+  bool (*canAssign) (const char *op1, const char *op2, const char *op3);
+  bool (*notUsedFrom) (const char *reg, const char *label, lineNode *head);
+  bool (*symmParmStack) (void);
+}
+peep;
+
+/** Basic type sizes */
+struct
+{
+  int char_size;
+  int short_size;
+  int int_size;
+  int long_size;
+  int longlong_size;
+  int near_ptr_size;
+  int far_ptr_size;
+  int ptr_size;
+  int funcptr_size;
+  int banked_funcptr_size;
+  int bit_size;
+  int float_size;
+}
+s;
+
 /* list of key words used by msc51 */
 static char *_hc08_keywords[] =
 {
