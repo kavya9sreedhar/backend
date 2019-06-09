@@ -149,36 +149,6 @@ struct
 }
 s;
 
-/* list of key words used by msc51 */
-static char *_hc08_keywords[] =
-{
-  "at",
-  //"bit",
-  "code",
-  "critical",
-  "data",
-  "far",
-  //"idata",
-  "interrupt",
-  "near",
-  //"pdata",
-  "reentrant",
-  //"sfr",
-  //"sbit",
-  //"using",
-  "xdata",
-  "_data",
-  "_code",
-  "_generic",
-  "_near",
-  "_xdata",
-  //"_pdata",
-  //"_idata",
-  "_naked",
-  "_overlay",
-  NULL
-};
-
 // tags for far, near, xstack, code generic pointers
 struct
 {
@@ -230,6 +200,215 @@ struct
     void (*genExtraAreaLinkOptions) (FILE *);
 }
 extraAreas;
+
+/* stack related information */
+struct
+{
+    /** -1 for grows down (z80), +1 for grows up (mcs51) */
+    int direction;
+    /** Extra overhead when calling between banks */
+    int bank_overhead;
+    /** Extra overhead when the function is an ISR */
+    int isr_overhead;
+    /** Standard overhead for a function call */
+    int call_overhead;
+    /** Re-enterant space */
+    int reent_overhead;
+    /** 'banked' call overhead.
+    Mild overlap with bank_overhead */
+    int banked_overhead;
+    /** 0 if sp points to last item pushed, 1 if sp points to next location to use*/
+    int offset;
+}
+stack;
+
+struct
+{
+    /** Size of the biggest shift the port can handle. -1 if port can handle
+    shifts of arbitrary size. */
+    signed int shift;
+    /* Has support routines for int x int -> long multiplication and unsigned int
+    x unsigned int -> unsigned long multiplication */
+    bool has_mulint2long;
+}
+support;
+
+struct
+{
+    void (*emitDebuggerSymbol) (const char *);
+    struct
+    {
+        int (*regNum) (const struct reg_info *);
+        bitVect *cfiSame;
+        bitVect *cfiUndef;
+        int addressSize;
+        int regNumRet;
+        int regNumSP;
+        int regNumBP;
+        int offsetSP;
+    }
+    dwarf;
+}
+debugger;
+
+struct
+ {
+     int maxCount;
+     int sizeofElement;
+     int sizeofMatchJump[3];
+     int sizeofRangeCompare[3];
+     int sizeofSubtract;
+     int sizeofDispatch;
+ }
+ jumptableCost;
+
+ /** Prefix to add to a C function (eg "_") */
+ const char *fun_prefix;
+
+ /** Called once the processor target has been selected.
+ First chance to initalise and set any port specific variables.
+ 'port' is set before calling this. May be NULL.
+ */
+ void (*init) (void);
+
+ /** Parses one option + its arguments */
+ bool (*parseOption) (int *pargc, char **argv, int *i);
+
+ /** Optional list of automatically parsed options. Should be
+ implemented to at least show the help text correctly. */
+ OPTION *poptions;
+
+ /** Initialise port spectific paths */
+ void (*initPaths) (void);
+
+ /** Called after all the options have been parsed. */
+ void (*finaliseOptions) (void);
+
+ /** Called after the port has been selected but before any
+ options are parsed. */
+ void (*setDefaultOptions) (void);
+
+ /** Does the dirty work. */
+ void (*assignRegisters) (struct ebbIndex *);
+
+ /** Returns the register name of a symbol.
+ Used so that 'reg_info' can be an incomplete type. */
+ const char *(*getRegName) (const struct reg_info *reg);
+
+ int (*getRegByName) (const char *name);
+
+ /** Try to keep track of register contents. */
+ bool (*rtrackUpdate)(const char* line);
+
+ /* list of keywords that are used by this
+ target (used by lexer) */
+ char **keywords;
+
+ /* Write any port specific assembler output. */
+ void (*genAssemblerPreamble) (FILE * of);
+
+ /* invoked at end assembler file */
+ void (*genAssemblerEnd) (FILE * of);
+
+ /* Write the port specific IVT. If genIVT is NULL or if
+ * it returns zero, default (8051) IVT generation code
+ * will be used.
+ */
+ int (*genIVT) (struct dbuf_s * oBuf, symbol ** intTable, int intCount);
+ void (*genXINIT) (FILE * of);
+
+ /* Write port specific startup code */
+ void (*genInitStartup) (FILE * of);
+
+ /* parameter passing in register related functions */
+ void (*reset_regparms) (struct sym_link *); /* reset the register count*/
+
+ int (*reg_parm) (struct sym_link *, bool reentrant); /* will return 1 if can be
+passed in register */
+
+ /** Process the pragma string 'sz'. Returns 0 if recognised and
+ processed, 1 otherwise. May be NULL.
+ */
+ int (*process_pragma) (const char *sz);
+
+ /** Mangles a support function name to reflect the calling model.
+ */
+ const char *(*getMangledFunctionName) (const char *szOrginial);
+
+ /** Returns true if the port can multiply the two types nativly
+ without using support functions.
+ */
+ bool (*hasNativeMulFor) (iCode *ic, sym_link *left, sym_link *right);
+
+ /** Returns true if the port has implemented certain bit
+ manipulation iCodes (RRC, RLC, SWAP, GETHBIT, GETABIT, GETBYTE, GETWORD)
+ */
+ bool (*hasExtBitOp) (int op, int size);
+
+ /** Returns the relative expense of accessing a particular output
+ storage class. Larger values indicate higher expense.
+ */
+ int (*oclsExpense) (struct memmap * oclass);
+
+ /** If TRUE, then tprintf and !dw will be used for some initalisers
+ */
+ bool use_dw_for_init;
+
+ /** TRUE for targets with little endian byte ordering, FALSE for
+ targets with big endian byte ordering.
+ */
+ bool little_endian;
+
+ /* condition transformations */
+ bool lt_nge; /* transform (a < b) to !(a >= b) */
+ bool gt_nle; /* transform (a > b) to !(a <= b) */
+ bool le_ngt; /* transform (a <= b) to !(a > b) */
+ bool ge_nlt; /* transform (a >= b) to !(a < b) */
+ bool ne_neq; /* transform a != b --> ! (a == b) */
+ bool eq_nne; /* transform a == b --> ! (a != b) */
+ bool arrayInitializerSuppported;
+ bool (*cseOk) (iCode * ic, iCode * pdic);
+ builtins *builtintable; /* table of builtin functions */
+ int unqualified_pointer; /* unqualified pointers type is */
+ int reset_labelKey; /* reset Label no 1 at the start of a function */
+ int globals_allowed; /* global & static locals not allowed ? 0 ONLY TININative */
+ int num_regs; /* Number of registers handled in the treedecomposition-based register allocator in SDCCralloc.hpp */
+ #define PORT_MAGIC 0xAC32
+  /** Used at runtime to detect if this structure has been completely filled in.*/
+  int magic;
+ }
+ PORT;
+
+
+/* list of key words used by msc51 */
+static char *_hc08_keywords[] =
+{
+  "at",
+  //"bit",
+  "code",
+  "critical",
+  "data",
+  "far",
+  //"idata",
+  "interrupt",
+  "near",
+  //"pdata",
+  "reentrant",
+  //"sfr",
+  //"sbit",
+  //"using",
+  "xdata",
+  "_data",
+  "_code",
+  "_generic",
+  "_near",
+  "_xdata",
+  //"_pdata",
+  //"_idata",
+  "_naked",
+  "_overlay",
+  NULL
+};
 
 void hc08_assignRegisters (ebbIndex *);
 
