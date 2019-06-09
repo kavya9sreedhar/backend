@@ -7815,7 +7815,7 @@ else
 fi
 
 cat >>confdefs.h <<_ACEOF
-#define OPT_DISABLE_CALTECH10 $OPT_DISABLE_CALTECH10
+define OPT_DISABLE_CALTECH10 $OPT_DISABLE_CALTECH10
 _ACEOF
 
 echo caltech10 >>ports.all
