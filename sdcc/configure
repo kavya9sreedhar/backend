@@ -658,6 +658,7 @@ OPT_DISABLE_R2K
 OPT_DISABLE_Z180
 OPT_DISABLE_Z80
 OPT_DISABLE_MCS51
+OPT_DISABLE_CALTECH10
 non_free_lib_dir_suffix
 lib_dir_suffix
 non_free_include_dir_suffix
@@ -1440,6 +1441,7 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --disable-caltech10-port Excludes the Caltech10 port 
   --disable-mcs51-port    Excludes the Intel mcs51 port
   --disable-z80-port      Excludes the Z80 port
   --disable-z180-port     Excludes the Z180 port
