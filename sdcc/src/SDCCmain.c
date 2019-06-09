@@ -366,6 +366,9 @@ static PORT *_ports[] = {
 #if !OPT_DISABLE_PDK15
   &pdk15_port,
 #endif
+#if !OPT_DISABLE_CALTECH10
+  &caltech10_port,
+#endif
 };
 
 #define NUM_PORTS (sizeof(_ports)/sizeof(_ports[0]))
@@ -2182,7 +2185,7 @@ preProcess (char **envp)
       {
         struct dbuf_s dbuf;
 
-        dbuf_init (&dbuf, 20);        
+        dbuf_init (&dbuf, 20);
         dbuf_printf (&dbuf, "-D__SDCC_REVISION=%s", getBuildNumber ());
         addSet (&preArgvSet, dbuf_detach_c_str (&dbuf));
       }
@@ -2704,4 +2707,3 @@ main (int argc, char **argv, char **envp)
 
   return 0;
 }
-

@@ -756,6 +756,7 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 with_ccache
+enable_caltech10_port
 enable_mcs51_port
 enable_z80_port
 enable_z180_port
@@ -1441,7 +1442,7 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --disable-caltech10-port Excludes the Caltech10 port 
+  --disable-caltech10-port Excludes the Caltech10 port
   --disable-mcs51-port    Excludes the Intel mcs51 port
   --disable-z80-port      Excludes the Z80 port
   --disable-z180-port     Excludes the Z180 port
@@ -7796,6 +7797,28 @@ rm -f ports.all ports.build
 
 # Supported targets
 
+# Check whether --enable-caltech10-port was given.
+if test "${enable_caltech10_port+set}" = set; then :
+    enableval=$enable_caltech10_port;
+fi
+
+
+if test "$enable_caltech10_port" = "no"; then
+  OPT_DISABLE_CALTECH10=1
+else
+  enable_caltech10_port="yes"
+  OPT_DISABLE_CALTECH10=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define OPT_DISABLE_CALTECH10 $OPT_DISABLE_CALTECH10
+_ACEOF
+
+echo caltech10 >>ports.all
+if test $OPT_DISABLE_CALTECH10 = 0; then
+  echo caltech10 >>ports.build
+fi
+
   # Check whether --enable-mcs51-port was given.
 if test "${enable_mcs51_port+set}" = set; then :
   enableval=$enable_mcs51_port;
@@ -9616,6 +9639,7 @@ do
     "sdccconf.h") CONFIG_HEADERS="$CONFIG_HEADERS sdccconf.h:sdccconf_in.h" ;;
     "sdas/linksrc/asxxxx_config.h") CONFIG_HEADERS="$CONFIG_HEADERS sdas/linksrc/asxxxx_config.h" ;;
     "doc/Makefile") CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
+    "src/caltech10/Makefile") CONFIG_FILES="$CONFIG_FILES src/caltech10/Makefile" ;;
     "src/ds390/Makefile") CONFIG_FILES="$CONFIG_FILES src/ds390/Makefile" ;;
     "sdas/as8xcxxx/Makefile") CONFIG_FILES="$CONFIG_FILES sdas/as8xcxxx/Makefile" ;;
     "device/lib/ds390/Makefile") CONFIG_FILES="$CONFIG_FILES device/lib/ds390/Makefile" ;;
@@ -10639,6 +10663,7 @@ sdcc ${VERSION} is now configured for
   MAKEDEP:              ${MAKEDEP}
 
   ENABLED Ports:
+    caltech10           ${enable_caltech10_port}
     ds390               ${enable_ds390_port}
     ds400               ${enable_ds400_port}
     hc08                ${enable_hc08_port}
