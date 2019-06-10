@@ -78,19 +78,10 @@ static void updateiTempRegisterUse (operand * op);
 #define RESULTONSTACK(x) \
                          (IC_RESULT(x) && IC_RESULT(x)->aop && \
                          IC_RESULT(x)->aop->type == AOP_STK )
-#define IS_AOP_HX(x) ((x)->regmask == HC08MASK_HX)
-#define IS_AOP_XA(x) ((x)->regmask == HC08MASK_XA)
-#define IS_AOP_AX(x) ((x)->regmask == HC08MASK_AX)
-#define IS_AOP_A(x) ((x)->regmask == HC08MASK_A)
 #define IS_AOP_X(x) ((x)->regmask == HC08MASK_X)
-#define IS_AOP_H(x) ((x)->regmask == HC08MASK_H)
-#define IS_AOP_WITH_A(x) (((x)->regmask & HC08MASK_A) != 0)
 #define IS_AOP_WITH_X(x) (((x)->regmask & HC08MASK_X) != 0)
-#define IS_AOP_WITH_H(x) (((x)->regmask & HC08MASK_H) != 0)
 
-#define IS_AOPOFS_A(x,o) (((x)->type == AOP_REG) && ((x)->aopu.aop_reg[o]->mask == HC08MASK_A))
 #define IS_AOPOFS_X(x,o) (((x)->type == AOP_REG) && ((x)->aopu.aop_reg[o]->mask == HC08MASK_X))
-#define IS_AOPOFS_H(x,o) (((x)->type == AOP_REG) && ((x)->aopu.aop_reg[o]->mask == HC08MASK_H))
 
 
 #define LSB     0
