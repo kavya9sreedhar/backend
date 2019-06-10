@@ -120,7 +120,7 @@ linker;
 struct
 {
   char *default_rules;
-  int (*getSize) (lineNode * line);
+  int (*getSize_) (lineNode * line);
   bitVect *(*getRegsRead) (lineNode * line);
   bitVect *(*getRegsWritten) (lineNode * line);
   bool (*deadMove) (const char *reg, lineNode * currpl, lineNode * head);

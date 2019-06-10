@@ -29,13 +29,7 @@
 
 enum
   {
-    A_IDX,
-    X_IDX,
-    H_IDX,
-    HX_IDX,
-    XA_IDX,
-    CND_IDX,
-    SP_IDX
+    X_IDX
   };
 
 
@@ -46,13 +40,7 @@ enum
 /* Must preserve the relation HC08MASK_H > HC08MASK_X > MC08MASK_A  */
 /* so that HC08MASK_REV can be automatically applied when reversing */
 /* the usual register pair ordering. */
-#define HC08MASK_A 0x01
 #define HC08MASK_X 0x02
-#define HC08MASK_H 0x04
-#define HC08MASK_REV 0x08
-#define HC08MASK_XA (HC08MASK_X | HC08MASK_A)
-#define HC08MASK_HX (HC08MASK_H | HC08MASK_X)
-#define HC08MASK_AX (HC08MASK_REV | HC08MASK_X | HC08MASK_A)
     
 /* definition for the registers */
 typedef struct reg_info
@@ -71,12 +59,7 @@ typedef struct reg_info
   }
 reg_info;
 extern reg_info regshc08[];
-extern reg_info *hc08_reg_a;
 extern reg_info *hc08_reg_x;
-extern reg_info *hc08_reg_h;
-extern reg_info *hc08_reg_hx;
-extern reg_info *hc08_reg_xa;
-extern reg_info *hc08_reg_sp;
 
 reg_info *hc08_regWithIdx (int);
 void hc08_useReg (reg_info * reg);
