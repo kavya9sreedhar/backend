@@ -1,21 +1,21 @@
 #include "peep.h"
-// more to include?
 
 // functions currently do nothing, placeholders
-int getSize (lineNode * line)
+int getSize_ (lineNode * line)
 {
     return 0;
 }
 
 bitVect getRegsRead (lineNode * line)
 {
-    return bit<1> 0; // bitvect?
-
+    bitVect v;
+    return v;
 }
 
 bitVect getRegsWritten (lineNode * line)
 {
-    return 0;
+    bitVect v;
+    return v;
 }
 
 bool deadMove (const char *reg, lineNode * currpl, lineNode * head)
