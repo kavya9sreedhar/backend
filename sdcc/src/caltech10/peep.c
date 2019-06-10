@@ -9,7 +9,8 @@ int getSize (lineNode * line)
 
 bitVect getRegsRead (lineNode * line)
 {
-    return 0; // bitvect?
+    return bit<1> 0; // bitvect?
+
 }
 
 bitVect getRegsWritten (lineNode * line)

@@ -12,10 +12,6 @@
 ## M4sh Initialization. ##
 ## -------------------- ##
 
-if test $OPT_DISABLE_CALTECH10 = 0; then
-  ac_config_files="$ac_config_files src/caltech10/Makefile"
-fi
-
 # Be more Bourne compatible
 DUALCASE=1; export DUALCASE # for MKS sh
 if test -n "${ZSH_VERSION+set}" && (emulate sh) >/dev/null 2>&1; then :
@@ -8843,6 +8839,10 @@ if test $OPT_DISABLE_HC08 = 0 || test $OPT_DISABLE_S08 = 0; then
 
 fi
 
+if test $OPT_DISABLE_CALTECH10 = 0; then
+  ac_config_files="$ac_config_files src/caltech10/Makefile"
+fi
+
 if test $OPT_DISABLE_MCS51 = 0; then
   ac_config_files="$ac_config_files src/mcs51/Makefile sdas/as8051/Makefile"
 
@@ -10744,6 +10744,7 @@ sdcc ${VERSION} is now configured for
   ENABLED Ports:
     ds390               ${enable_ds390_port}
     ds400               ${enable_ds400_port}
+    caltech10		${enable_caltech10_port}
     hc08                ${enable_hc08_port}
     s08                 ${enable_s08_port}
     mcs51               ${enable_mcs51_port}

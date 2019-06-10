@@ -2,6 +2,8 @@
 #define PEEPC10_INCLUDE
 //more files to inc?
 
+#include "common.h"
+
 int getSize (lineNode * line);
 bitVect getRegsRead (lineNode * line);
 bitVect getRegsWritten (lineNode * line);

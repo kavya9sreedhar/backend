@@ -31,6 +31,10 @@ enum
   {
     A_IDX,
     X_IDX,
+    H_IDX,
+    HX_IDX,
+    XA_IDX,
+    CND_IDX,
     SP_IDX
   };
 
@@ -69,6 +73,9 @@ reg_info;
 extern reg_info regshc08[];
 extern reg_info *hc08_reg_a;
 extern reg_info *hc08_reg_x;
+extern reg_info *hc08_reg_h;
+extern reg_info *hc08_reg_hx;
+extern reg_info *hc08_reg_xa;
 extern reg_info *hc08_reg_sp;
 
 reg_info *hc08_regWithIdx (int);
