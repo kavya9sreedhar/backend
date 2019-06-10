@@ -187,7 +187,6 @@ transferRegReg (reg_info *sreg, reg_info *dreg, bool freesrc)
           break;
         case X_IDX:            /* X to H */
           pushReg (hc08_reg_x, FALSE);
-          pullReg (hc08_reg_h);
           break;
         default:
           error = 1;
@@ -262,7 +261,6 @@ updateCFA (void)
     return;
 
   if (options.debug && !regalloc_dry_run)
-    debugFile->writeFrameAddress (NULL, hc08_reg_sp, 1 + _G.stackOfs + _G.stackPushes);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -393,20 +391,10 @@ pullNull (int n)
 static void
 pushConst (int c)
 {
-  if (hc08_reg_a->isFree)
-    {
-      loadRegFromConst (hc08_reg_a, c);
-      pushReg (hc08_reg_a, TRUE);
-    }
-  else if (hc08_reg_x->isFree)
+  if (hc08_reg_x->isFree)
     {
       loadRegFromConst (hc08_reg_x, c);
       pushReg (hc08_reg_x, TRUE);
-    }
-  else if (hc08_reg_h->isFree && !c)
-    {
-      loadRegFromConst (hc08_reg_h, c);
-      pushReg (hc08_reg_h, TRUE);
     }
   else if (!c)
     {
@@ -416,12 +404,8 @@ pushConst (int c)
     }
   else
     {
-      pushReg (hc08_reg_a, FALSE);
-      pushReg (hc08_reg_a, FALSE);
-      loadRegFromConst (hc08_reg_a, c);
       emitcode ("sta", "2,s");
       regalloc_dry_run_cost += 3;
-      pullReg (hc08_reg_a);
     }
 }
 
@@ -501,7 +485,7 @@ adjustStack (int n)
               emitcode ("pshh", "");      /* 1 byte,  2 cycles */
               regalloc_dry_run_cost++;
             }
-          else if (n == 1 && optimize.codeSize && hc08_reg_h->isFree)
+          else if (n == 1 && optimize.codeSize)
             {
               emitcode ("pulh", "");      /* 1 byte,  3 cycles */
               regalloc_dry_run_cost++;
@@ -687,12 +671,9 @@ forceload:
          }
        if (aop->type == AOP_SOF && !(_G.stackOfs + _G.stackPushes + aop->aopu.aop_stk + aop->size - loffset - 1))
         {
-          pullReg (hc08_reg_h);
-          pushReg (hc08_reg_h, FALSE);
           break;
         }
       if (aop->type == AOP_REG && loffset < aop->size)
-        transferRegReg (aop->aopu.aop_reg[loffset], hc08_reg_h, TRUE);
       else if (!(aop->op && isOperandVolatile (aop->op, FALSE)) &&  (loffset - 1 >= 0 || aop->type == AOP_LIT) && (aop->type == AOP_LIT || aop->type == AOP_IMMD || IS_S08 && aop->type == AOP_EXT)) /* TODO: Allow negative loffset - 1 */
         {
           bool pushedx = FALSE;
@@ -701,13 +682,7 @@ forceload:
               pushReg (hc08_reg_x, TRUE);
               pushedx = TRUE;
             }
-          loadRegFromAop (hc08_reg_hx, aop, loffset - 1);
           pullOrFreeReg (hc08_reg_x, pushedx);
-        }
-      else if (hc08_reg_a->isFree)
-        {
-          loadRegFromAop (hc08_reg_a, aop, loffset);
-          transferRegReg (hc08_reg_a, hc08_reg_h, TRUE);
         }
       else if (hc08_reg_x->isFree)
         {
@@ -716,10 +691,6 @@ forceload:
         }
       else
         {
-          pushReg (hc08_reg_a, TRUE);
-          loadRegFromAop (hc08_reg_a, aop, loffset);
-          transferRegReg (hc08_reg_a, hc08_reg_h, TRUE);
-          pullReg (hc08_reg_a);
         }
       break;
     case HX_IDX:
@@ -741,17 +712,14 @@ forceload:
             }
           else if (offset == 1)
             {
-              pullReg (hc08_reg_h);
               pullReg (hc08_reg_x);
               pushReg (hc08_reg_x, FALSE);
-              pushReg (hc08_reg_h, FALSE);
               break;
             }
         }
       if (IS_AOP_HX (aop))
         break;
       else if (IS_AOP_XA (aop))
-        transferRegReg (hc08_reg_xa, hc08_reg_hx, FALSE);
       else if (aop->type == AOP_DIR || IS_S08 && aop->type == AOP_EXT)
         {
           if (aop->size >= (loffset + 2))
@@ -762,7 +730,6 @@ forceload:
             }
           else
             {
-              loadRegFromConst (hc08_reg_h, 0);
               loadRegFromAop (hc08_reg_x, aop, loffset);
             }
         }
@@ -774,7 +741,6 @@ forceload:
         }
       else
         {
-          loadRegFromAop (hc08_reg_h, aop, loffset + 1);
           loadRegFromAop (hc08_reg_x, aop, loffset);
         }
       break;
@@ -782,16 +748,12 @@ forceload:
       if (IS_AOP_XA (aop))
         break;
       else if (IS_AOP_HX (aop))
-        transferRegReg (hc08_reg_hx, hc08_reg_xa, FALSE);
       else if (IS_AOP_AX (aop))
         {
-          pushReg (hc08_reg_a, FALSE);
-          transferRegReg (hc08_reg_x, hc08_reg_a, FALSE);
           pullReg (hc08_reg_x);
         }
       else
         {
-          loadRegFromAop (hc08_reg_a, aop, loffset);
           loadRegFromAop (hc08_reg_x, aop, loffset + 1);
         }
       break;
@@ -814,21 +776,15 @@ loadRegHXAfromAop(asmop * aopH, int ofsH, asmop * aopX, int ofsX, asmop * aopA, 
   if (aopA && aopX && IS_AOPOFS_X (aopA, ofsA) && IS_AOPOFS_A (aopX, ofsX))
     {
       /* Swap A and X, load H */
-      pushReg (hc08_reg_a, TRUE);
       if (aopH)
-        loadRegFromAop (hc08_reg_h, aopH, ofsH);
-      transferRegReg (hc08_reg_x, hc08_reg_a, FALSE);
       pullReg (hc08_reg_x);
       return;
     }
   if (aopA && aopH && IS_AOPOFS_H (aopA, ofsA) && IS_AOPOFS_A (aopH, ofsH))
     {
       /* Swap A and H, load X */
-      pushReg (hc08_reg_a, TRUE);
       if (aopX)
         loadRegFromAop (hc08_reg_x, aopX, ofsX);
-      transferRegReg (hc08_reg_h, hc08_reg_a, FALSE);
-      pullReg (hc08_reg_h);
       return;
     }
   if (aopX && aopH && IS_AOPOFS_H (aopX, ofsX) && IS_AOPOFS_X (aopH, ofsH))
@@ -836,9 +792,6 @@ loadRegHXAfromAop(asmop * aopH, int ofsH, asmop * aopX, int ofsX, asmop * aopA, 
       /* Swap X and H, load A */
       pushReg (hc08_reg_x, TRUE);
       if (aopA)
-        loadRegFromAop (hc08_reg_a, aopA, ofsA);
-      transferRegReg (hc08_reg_h, hc08_reg_x, FALSE);
-      pullReg (hc08_reg_h);
       return;
     }
 
@@ -846,18 +799,11 @@ loadRegHXAfromAop(asmop * aopH, int ofsH, asmop * aopX, int ofsX, asmop * aopA, 
   if (aopA && aopH && aopX && IS_AOPOFS_A (aopH, ofsH) && IS_AOPOFS_H (aopX, ofsX) && IS_AOPOFS_X (aopA, ofsA))
     {
       /* Rotate A->H->X->A */
-      pushReg (hc08_reg_a, FALSE);
-      transferRegReg (hc08_reg_x, hc08_reg_a, FALSE);
-      transferRegReg (hc08_reg_h, hc08_reg_x, FALSE);
-      pullReg (hc08_reg_h);
       return;
     }
   if (aopA && aopH && aopX && IS_AOPOFS_A (aopX, ofsX) && IS_AOPOFS_X (aopH, ofsH) && IS_AOPOFS_H (aopA, ofsA))
     {
       /* Rotate A->X->H->A */
-      pushReg (hc08_reg_a, FALSE);
-      transferRegReg (hc08_reg_h, hc08_reg_a, FALSE);
-      transferRegReg (hc08_reg_x, hc08_reg_h, FALSE);
       pullReg (hc08_reg_x);
       return;
     }
@@ -867,38 +813,29 @@ loadRegHXAfromAop(asmop * aopH, int ofsH, asmop * aopX, int ofsX, asmop * aopA, 
     {
       loadRegFromAop (hc08_reg_x, aopX, ofsX);
       if (aopA)
-        hc08_freeReg (hc08_reg_a); /* in case it's needed to load H */
       if (aopH)
-        loadRegFromAop (hc08_reg_h, aopH, ofsH);
       if (aopA)
-        loadRegFromAop (hc08_reg_a, aopA, ofsA);
       return;
     }
   if (aopH && (aopH->type == AOP_REG) && !IS_AOP_WITH_H (aopH))
     {
       if (aopA)
-        hc08_freeReg (hc08_reg_a); /* in case it's needed to load H */
       if (aopX)
         hc08_freeReg (hc08_reg_x); /* in case it's needed to load H */
-      loadRegFromAop (hc08_reg_h, aopH, ofsH);
       if (aopX)
         loadRegFromAop (hc08_reg_x, aopX, ofsX);
       if (aopA)
-        loadRegFromAop (hc08_reg_a, aopA, ofsA);
       return;
     }
 
   /* Either A needs to be loaded first or the order no longer matters */
   if (aopA)
-    loadRegFromAop (hc08_reg_a, aopA, ofsA);
   if (aopX)
     hc08_freeReg (hc08_reg_x); /* in case it's needed to load H */
   if (aopH && aopX && (aopH == aopX) && (ofsH == (ofsX+1)))
-    loadRegFromAop (hc08_reg_hx, aopX, ofsX);
   else
     {
       if (aopH)
-        loadRegFromAop (hc08_reg_h, aopH, ofsH);
       if (aopX)
         loadRegFromAop (hc08_reg_x, aopX, ofsX);
     }
@@ -919,9 +856,7 @@ forceStackedAop (asmop * aop, bool copyOrig)
 
   DD (emitcode ("", "; forcedStackAop %s", aopName (aop)));
 
-  if (copyOrig && hc08_reg_a->isFree)
-    reg = hc08_reg_a;
-  else if (copyOrig && hc08_reg_x->isFree)
+  if (copyOrig && hc08_reg_x->isFree)
     reg = hc08_reg_x;
   else
     reg = NULL;
@@ -937,7 +872,6 @@ forceStackedAop (asmop * aop, bool copyOrig)
         }
       else
         {
-          aopsof->aopu.aop_stk = pushReg (hc08_reg_a, FALSE);
         }
       aopsof->op = aop->op;
       newaop->stk_aop[loffset] = aopsof;
@@ -970,7 +904,6 @@ storeRegToAop (reg_info *reg, asmop * aop, int loffset)
 
   if ((reg->rIdx == HX_IDX) && aop->stacked && (aop->stk_aop[loffset] || aop->stk_aop[loffset + 1]))
     {
-      storeRegToAop (hc08_reg_h, aop, loffset + 1);
       storeRegToAop (hc08_reg_x, aop, loffset);
       return;
     }
@@ -978,7 +911,6 @@ storeRegToAop (reg_info *reg, asmop * aop, int loffset)
   if ((reg->rIdx == XA_IDX) && aop->stacked && (aop->stk_aop[loffset] || aop->stk_aop[loffset + 1]))
     {
       storeRegToAop (hc08_reg_x, aop, loffset + 1);
-      storeRegToAop (hc08_reg_a, aop, loffset);
       return;
     }
 
@@ -1017,24 +949,13 @@ storeRegToAop (reg_info *reg, asmop * aop, int loffset)
     case H_IDX:
       if ((aop->type == AOP_REG) && (loffset < aop->size))
         transferRegReg (reg, aop->aopu.aop_reg[loffset], FALSE);
-      else if (hc08_reg_a->isFree)
-        {
-          transferRegReg (hc08_reg_h, hc08_reg_a, FALSE);
-          storeRegToAop (hc08_reg_a, aop, loffset);
-          hc08_freeReg (hc08_reg_a);
-        }
       else if (hc08_reg_x->isFree)
         {
-          transferRegReg (hc08_reg_h, hc08_reg_x, FALSE);
           storeRegToAop (hc08_reg_x, aop, loffset);
           hc08_freeReg (hc08_reg_x);
         }
       else
         {
-          pushReg (hc08_reg_a, TRUE);
-          transferRegReg (hc08_reg_h, hc08_reg_a, FALSE);
-          storeRegToAop (hc08_reg_a, aop, loffset);
-          pullReg (hc08_reg_a);
         }
       break;
     case HX_IDX:
@@ -1054,43 +975,32 @@ storeRegToAop (reg_info *reg, asmop * aop, int loffset)
           regalloc_dry_run_cost += (aop->type == AOP_DIR ? 2 : 3);;
         }
       else if (IS_AOP_XA (aop))
-        transferRegReg (reg, hc08_reg_xa, FALSE);
       else if (IS_AOP_HX (aop))
         break;
-      else if (hc08_reg_a->isFree)
         {
           bool needpula;
-          needpula = pushRegIfUsed (hc08_reg_a);
-          transferRegReg (hc08_reg_h, hc08_reg_a, FALSE);
-          storeRegToAop (hc08_reg_a, aop, loffset + 1);
           storeRegToAop (hc08_reg_x, aop, loffset);
-          pullOrFreeReg (hc08_reg_a, needpula);
         }
       else
         {
           bool needpulx;
           storeRegToAop (hc08_reg_x, aop, loffset);
           needpulx = pushRegIfUsed (hc08_reg_x);
-          transferRegReg (hc08_reg_h, hc08_reg_x, FALSE);
           storeRegToAop (hc08_reg_x, aop, loffset + 1);
           pullOrFreeReg (hc08_reg_x, needpulx);
         }
       break;
     case XA_IDX:
       if (IS_AOP_HX (aop))
-        transferRegReg (reg, hc08_reg_hx, FALSE);
       else if (IS_AOP_XA (aop))
         break;
       else if (IS_AOP_AX (aop))
         {
-          pushReg (hc08_reg_a, FALSE);
-          transferRegReg (hc08_reg_x, hc08_reg_a, FALSE);
           pullReg (hc08_reg_x);
         }
       else
         {
-          storeRegToAop (hc08_reg_a, aop, loffset);
-          storeRegToAop (hc08_reg_x, aop, loffset + 1);
+          hc08_reg_x, aop, loffset + 1);
         }
       break;
     default:
