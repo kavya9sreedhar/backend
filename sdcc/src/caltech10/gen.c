@@ -163,77 +163,14 @@ transferRegReg (reg_info *sreg, reg_info *dreg, bool freesrc)
 
   switch (dstidx)
     {
-    case A_IDX:
-      switch (srcidx)
-        {
-        case H_IDX:            /* H to A */
-          pushReg (hc08_reg_h, FALSE);
-          pullReg (hc08_reg_a);
-          break;
-        case X_IDX:            /* X to A */
-          emitcode ("txa", "");
-          regalloc_dry_run_cost++;
-          break;
-        default:
-          error = 1;
-        }
-      break;
-    case H_IDX:
-      switch (srcidx)
-        {
-        case A_IDX:            /* A to H */
-          pushReg (hc08_reg_a, FALSE);
-          pullReg (hc08_reg_h);
-          break;
-        case X_IDX:            /* X to H */
-          pushReg (hc08_reg_x, FALSE);
-          pullReg (hc08_reg_h);
-          break;
-        default:
-          error = 1;
-        }
-      break;
     case X_IDX:
       switch (srcidx)
         {
-        case A_IDX:            /* A to X */
-          emitcode ("tax", "");
-          regalloc_dry_run_cost++;
-          break;
-        case H_IDX:            /* H to X */
-          pushReg (hc08_reg_h, FALSE);
-          pullReg (hc08_reg_x);
-          break;
         default:
           error = 1;
         }
       break;
-    case HX_IDX:
-      switch (srcidx)
-        {
-        case XA_IDX:           /* XA to HX */
-          pushReg (hc08_reg_x, FALSE);
-          pullReg (hc08_reg_h);
-          emitcode ("tax", "");
-          regalloc_dry_run_cost++;
-          break;
-        default:
-          error = 1;
-        }
-      break;
-    case XA_IDX:
-      switch (srcidx)
-        {
-        case HX_IDX:           /* HX to XA */
-          emitcode ("txa", "");
-          regalloc_dry_run_cost++;
-          pushReg (hc08_reg_h, FALSE);
-          pullReg (hc08_reg_x);
-          break;
-        default:
-          error = 1;
-        }
-      break;
+
     default:
       error = 1;
     }
@@ -276,44 +213,13 @@ pushReg (reg_info * reg, bool freereg)
 
   switch (regidx)
     {
-    case A_IDX:
-      emitcode ("psha", "");
-      regalloc_dry_run_cost++;
-      _G.stackPushes++;
-      updateCFA ();
-      break;
     case X_IDX:
       emitcode ("pshx", "");
       regalloc_dry_run_cost++;
       _G.stackPushes++;
       updateCFA ();
       break;
-    case H_IDX:
-      emitcode ("pshh", "");
-      regalloc_dry_run_cost++;
-      _G.stackPushes++;
-      updateCFA ();
-      break;
-    case HX_IDX:
-      emitcode ("pshx", "");
-      regalloc_dry_run_cost++;
-      _G.stackPushes++;
-      updateCFA ();
-      emitcode ("pshh", "");
-      regalloc_dry_run_cost++;
-      _G.stackPushes++;
-      updateCFA ();
-      break;
-    case XA_IDX:
-      emitcode ("psha", "");
-      regalloc_dry_run_cost++;
-      updateCFA ();
-      _G.stackPushes++;
-      emitcode ("pshx", "");
-      regalloc_dry_run_cost++;
-      updateCFA ();
-      _G.stackPushes++;
-      break;
+
     default:
       break;
     }
@@ -332,44 +238,13 @@ pullReg (reg_info * reg)
 
   switch (regidx)
     {
-    case A_IDX:
-      emitcode ("pula", "");
-      regalloc_dry_run_cost++;
-      _G.stackPushes--;
-      updateCFA ();
-      break;
     case X_IDX:
       emitcode ("pulx", "");
       regalloc_dry_run_cost++;
       _G.stackPushes--;
       updateCFA ();
       break;
-    case H_IDX:
-      emitcode ("pulh", "");
-      regalloc_dry_run_cost++;
-      _G.stackPushes--;
-      updateCFA ();
-      break;
-    case HX_IDX:
-      emitcode ("pulh", "");
-      regalloc_dry_run_cost++;
-      _G.stackPushes--;
-      updateCFA ();
-      emitcode ("pulx", "");
-      regalloc_dry_run_cost++;
-      _G.stackPushes--;
-      updateCFA ();
-      break;
-    case XA_IDX:
-      emitcode ("pulx", "");
-      regalloc_dry_run_cost++;
-      _G.stackPushes--;
-      updateCFA ();
-      emitcode ("pula", "");
-      regalloc_dry_run_cost++;
-      _G.stackPushes--;
-      updateCFA ();
-      break;
+
     default:
       break;
     }
@@ -633,29 +508,6 @@ forceload:
 
   switch (regidx)
     {
-    case A_IDX:
-      if (aop->type == AOP_REG)
-        {
-          if (loffset < aop->size)
-            transferRegReg (aop->aopu.aop_reg[loffset], reg, FALSE);
-          else
-            loadRegFromConst (reg, 0); /* TODO: handle sign extension */
-        }
-      else
-        {
-          if (aop->type == AOP_LIT)
-            {
-              loadRegFromConst (reg, byteOfVal (aop->aopu.aop_lit, loffset));
-            }
-          else
-            {
-              const char *l = aopAdrStr (aop, loffset, FALSE);
-              emitcode ("lda", "%s", l);
-              regalloc_dry_run_cost += ((aop->type == AOP_DIR || aop->type == AOP_IMMD || aop->type == AOP_LIT) ? 2 : 3);
-              hc08_dirtyReg (reg, FALSE);
-            }
-        }
-      break;
     case X_IDX:
       if (aop->type == AOP_REG)
         {
@@ -679,123 +531,6 @@ forceload:
             }
         }
       break;
-    case H_IDX:
-       if (aop->type == AOP_LIT)
-         {
-           loadRegFromConst (reg, byteOfVal (aop->aopu.aop_lit, loffset));
-           break;
-         }
-       if (aop->type == AOP_SOF && !(_G.stackOfs + _G.stackPushes + aop->aopu.aop_stk + aop->size - loffset - 1))
-        {
-          pullReg (hc08_reg_h);
-          pushReg (hc08_reg_h, FALSE);
-          break;
-        }
-      if (aop->type == AOP_REG && loffset < aop->size)
-        transferRegReg (aop->aopu.aop_reg[loffset], hc08_reg_h, TRUE);
-      else if (!(aop->op && isOperandVolatile (aop->op, FALSE)) &&  (loffset - 1 >= 0 || aop->type == AOP_LIT) && (aop->type == AOP_LIT || aop->type == AOP_IMMD || IS_S08 && aop->type == AOP_EXT)) /* TODO: Allow negative loffset - 1 */
-        {
-          bool pushedx = FALSE;
-          if (!hc08_reg_x->isFree)
-            {
-              pushReg (hc08_reg_x, TRUE);
-              pushedx = TRUE;
-            }
-          loadRegFromAop (hc08_reg_hx, aop, loffset - 1);
-          pullOrFreeReg (hc08_reg_x, pushedx);
-        }
-      else if (hc08_reg_a->isFree)
-        {
-          loadRegFromAop (hc08_reg_a, aop, loffset);
-          transferRegReg (hc08_reg_a, hc08_reg_h, TRUE);
-        }
-      else if (hc08_reg_x->isFree)
-        {
-          loadRegFromAop (hc08_reg_x, aop, loffset);
-          transferRegReg (hc08_reg_x, hc08_reg_h, TRUE);
-        }
-      else
-        {
-          pushReg (hc08_reg_a, TRUE);
-          loadRegFromAop (hc08_reg_a, aop, loffset);
-          transferRegReg (hc08_reg_a, hc08_reg_h, TRUE);
-          pullReg (hc08_reg_a);
-        }
-      break;
-    case HX_IDX:
-       if (aop->type == AOP_LIT)
-         {
-           loadRegFromConst (reg, byteOfVal (aop->aopu.aop_lit, loffset) |
-                                  (byteOfVal (aop->aopu.aop_lit, loffset+1) << 8));
-           break;
-         }
-      if (aop->type == AOP_SOF)
-        {
-          int offset = (_G.stackOfs + _G.stackPushes + aop->aopu.aop_stk + aop->size - loffset - 1);
-          if (IS_S08 && offset >= 0 && offset <= 0xff)
-            {
-              emitcode ("ldhx", "%s", aopAdrStr (aop, loffset, TRUE));
-              regalloc_dry_run_cost += 2;
-              hc08_dirtyReg (reg, FALSE);
-              break;
-            }
-          else if (offset == 1)
-            {
-              pullReg (hc08_reg_h);
-              pullReg (hc08_reg_x);
-              pushReg (hc08_reg_x, FALSE);
-              pushReg (hc08_reg_h, FALSE);
-              break;
-            }
-        }
-      if (IS_AOP_HX (aop))
-        break;
-      else if (IS_AOP_XA (aop))
-        transferRegReg (hc08_reg_xa, hc08_reg_hx, FALSE);
-      else if (aop->type == AOP_DIR || IS_S08 && aop->type == AOP_EXT)
-        {
-          if (aop->size >= (loffset + 2))
-            {
-              emitcode ("ldhx", "%s", aopAdrStr (aop, loffset, TRUE));
-              regalloc_dry_run_cost += (aop->type == AOP_DIR ? 2 : 3);
-              hc08_dirtyReg (reg, FALSE);
-            }
-          else
-            {
-              loadRegFromConst (hc08_reg_h, 0);
-              loadRegFromAop (hc08_reg_x, aop, loffset);
-            }
-        }
-      else if ((aop->type == AOP_LIT) || (aop->type == AOP_IMMD))
-        {
-          emitcode ("ldhx", "%s", aopAdrStr (aop, loffset, TRUE));
-          regalloc_dry_run_cost += 3;
-          hc08_dirtyReg (reg, FALSE);
-        }
-      else
-        {
-          loadRegFromAop (hc08_reg_h, aop, loffset + 1);
-          loadRegFromAop (hc08_reg_x, aop, loffset);
-        }
-      break;
-    case XA_IDX:
-      if (IS_AOP_XA (aop))
-        break;
-      else if (IS_AOP_HX (aop))
-        transferRegReg (hc08_reg_hx, hc08_reg_xa, FALSE);
-      else if (IS_AOP_AX (aop))
-        {
-          pushReg (hc08_reg_a, FALSE);
-          transferRegReg (hc08_reg_x, hc08_reg_a, FALSE);
-          pullReg (hc08_reg_x);
-        }
-      else
-        {
-          loadRegFromAop (hc08_reg_a, aop, loffset);
-          loadRegFromAop (hc08_reg_x, aop, loffset + 1);
-        }
-      break;
-    }
 
   hc08_useReg (reg);
 }
@@ -968,20 +703,6 @@ storeRegToAop (reg_info *reg, asmop * aop, int loffset)
   DD (emitcode ("", ";     storeRegToAop (%s, %s, %d), stacked=%d",
                 reg->name, aopName (aop), loffset, aop->stacked));
 
-  if ((reg->rIdx == HX_IDX) && aop->stacked && (aop->stk_aop[loffset] || aop->stk_aop[loffset + 1]))
-    {
-      storeRegToAop (hc08_reg_h, aop, loffset + 1);
-      storeRegToAop (hc08_reg_x, aop, loffset);
-      return;
-    }
-
-  if ((reg->rIdx == XA_IDX) && aop->stacked && (aop->stk_aop[loffset] || aop->stk_aop[loffset + 1]))
-    {
-      storeRegToAop (hc08_reg_x, aop, loffset + 1);
-      storeRegToAop (hc08_reg_a, aop, loffset);
-      return;
-    }
-
   if (aop->stacked && aop->stk_aop[loffset])
     {
       storeRegToAop (reg, aop->stk_aop[loffset], 0);
@@ -996,15 +717,6 @@ storeRegToAop (reg_info *reg, asmop * aop, int loffset)
 
   switch (regidx)
     {
-    case A_IDX:
-      if ((aop->type == AOP_REG) && (loffset < aop->size))
-        transferRegReg (reg, aop->aopu.aop_reg[loffset], FALSE);
-      else
-        {
-          emitcode ("sta", "%s", aopAdrStr (aop, loffset, FALSE));
-          regalloc_dry_run_cost += ((aop->type == AOP_DIR || aop->type == AOP_IMMD) ? 2 :3);
-        }
-      break;
     case X_IDX:
       if ((aop->type == AOP_REG) && (loffset < aop->size))
         transferRegReg (reg, aop->aopu.aop_reg[loffset], FALSE);
@@ -1014,85 +726,7 @@ storeRegToAop (reg_info *reg, asmop * aop, int loffset)
           regalloc_dry_run_cost += ((aop->type == AOP_DIR || aop->type == AOP_IMMD) ? 2 :3);
         }
       break;
-    case H_IDX:
-      if ((aop->type == AOP_REG) && (loffset < aop->size))
-        transferRegReg (reg, aop->aopu.aop_reg[loffset], FALSE);
-      else if (hc08_reg_a->isFree)
-        {
-          transferRegReg (hc08_reg_h, hc08_reg_a, FALSE);
-          storeRegToAop (hc08_reg_a, aop, loffset);
-          hc08_freeReg (hc08_reg_a);
-        }
-      else if (hc08_reg_x->isFree)
-        {
-          transferRegReg (hc08_reg_h, hc08_reg_x, FALSE);
-          storeRegToAop (hc08_reg_x, aop, loffset);
-          hc08_freeReg (hc08_reg_x);
-        }
-      else
-        {
-          pushReg (hc08_reg_a, TRUE);
-          transferRegReg (hc08_reg_h, hc08_reg_a, FALSE);
-          storeRegToAop (hc08_reg_a, aop, loffset);
-          pullReg (hc08_reg_a);
-        }
-      break;
-    case HX_IDX:
-      if (aop->type == AOP_SOF)
-        {
-          int offset = (_G.stackOfs + _G.stackPushes + aop->aopu.aop_stk + aop->size - loffset - 1);
-          if (IS_S08 && offset >= 0 && offset <= 0xff)
-            {
-              emitcode ("sthx", "%s", aopAdrStr (aop, loffset, TRUE));
-              regalloc_dry_run_cost += 2;
-              break;
-            }
-        }
-      if (aop->type == AOP_DIR || IS_S08 && aop->type == AOP_EXT)
-        {
-          emitcode ("sthx", "%s", aopAdrStr (aop, loffset, TRUE));
-          regalloc_dry_run_cost += (aop->type == AOP_DIR ? 2 : 3);;
-        }
-      else if (IS_AOP_XA (aop))
-        transferRegReg (reg, hc08_reg_xa, FALSE);
-      else if (IS_AOP_HX (aop))
-        break;
-      else if (hc08_reg_a->isFree)
-        {
-          bool needpula;
-          needpula = pushRegIfUsed (hc08_reg_a);
-          transferRegReg (hc08_reg_h, hc08_reg_a, FALSE);
-          storeRegToAop (hc08_reg_a, aop, loffset + 1);
-          storeRegToAop (hc08_reg_x, aop, loffset);
-          pullOrFreeReg (hc08_reg_a, needpula);
-        }
-      else
-        {
-          bool needpulx;
-          storeRegToAop (hc08_reg_x, aop, loffset);
-          needpulx = pushRegIfUsed (hc08_reg_x);
-          transferRegReg (hc08_reg_h, hc08_reg_x, FALSE);
-          storeRegToAop (hc08_reg_x, aop, loffset + 1);
-          pullOrFreeReg (hc08_reg_x, needpulx);
-        }
-      break;
-    case XA_IDX:
-      if (IS_AOP_HX (aop))
-        transferRegReg (reg, hc08_reg_hx, FALSE);
-      else if (IS_AOP_XA (aop))
-        break;
-      else if (IS_AOP_AX (aop))
-        {
-          pushReg (hc08_reg_a, FALSE);
-          transferRegReg (hc08_reg_x, hc08_reg_a, FALSE);
-          pullReg (hc08_reg_x);
-        }
-      else
-        {
-          storeRegToAop (hc08_reg_a, aop, loffset);
-          storeRegToAop (hc08_reg_x, aop, loffset + 1);
-        }
-      break;
+
     default:
       wassert (0);
     }
@@ -1137,39 +771,6 @@ loadRegFromConst (reg_info * reg, int c)
 {
   switch (reg->rIdx)
     {
-    case A_IDX:
-      c &= 0xff;
-      if (reg->isLitConst)
-        {
-          if (reg->litConst == c)
-            break;
-          if (((reg->litConst + 1) & 0xff) == c)
-            {
-              emitcode ("inca", "");
-              regalloc_dry_run_cost++;
-              break;
-            }
-          if (((reg->litConst - 1) & 0xff) == c)
-            {
-              emitcode ("deca", "");
-              regalloc_dry_run_cost++;
-              break;
-            }
-        }
-
-      if (hc08_reg_x->isLitConst && hc08_reg_x->litConst == c)
-        transferRegReg (hc08_reg_x, reg, FALSE);
-      else if (!c)
-        {
-          emitcode ("clra", "");
-          regalloc_dry_run_cost++;
-        }
-      else
-        {
-          emitcode ("lda", "!immedbyte", c);
-          regalloc_dry_run_cost += 2;
-        }
-      break;
     case X_IDX:
       c &= 0xff;
       if (reg->isLitConst)
@@ -1203,78 +804,7 @@ loadRegFromConst (reg_info * reg, int c)
           regalloc_dry_run_cost += 2;
         }
       break;
-    case H_IDX:
-      c &= 0xff;
-      if (reg->isLitConst && reg->litConst == c)
-	break;
 
-      if (!c)
-        {
-          emitcode ("clrh", "");
-          regalloc_dry_run_cost++;
-        }
-      else if (hc08_reg_a->isLitConst && hc08_reg_a->litConst == c)
-        transferRegReg (hc08_reg_a, reg, FALSE);
-      else if (hc08_reg_x->isLitConst && hc08_reg_x->litConst == c)
-        transferRegReg (hc08_reg_x, reg, FALSE);
-      else if (hc08_reg_a->isFree)
-        {
-          loadRegFromConst (hc08_reg_a, c);
-          transferRegReg (hc08_reg_a, hc08_reg_h, TRUE);
-        }
-      else if (hc08_reg_x->isFree)
-        {
-          loadRegFromConst (hc08_reg_hx, c << 8);
-        }
-      else
-        {
-          pushReg (hc08_reg_x, TRUE);
-          loadRegFromConst (hc08_reg_hx, c << 8);
-          pullReg (hc08_reg_x);
-        }
-      break;
-    case HX_IDX:
-      c &= 0xffff;
-      if (reg->isLitConst)
-        {
-          int delta = (c - reg->litConst) & 0xffff;
-          if (delta & 0x8000)
-            delta = -0x8000 + (delta & 0x7fff);
-          if (reg->litConst == c)
-            break;
-          if ((reg->litConst & 0xff) == c)
-            {
-              loadRegFromConst (hc08_reg_h, 0);
-              break;
-            }
-          if ((reg->litConst & 0xff00) == (c & 0xff00))
-            {
-              loadRegFromConst (hc08_reg_x, c & 0xff);
-              break;
-            }
-          if ((delta <= 127) && (delta >= -128))
-            {
-              emitcode ("aix","#%d", delta);
-              regalloc_dry_run_cost += 2;
-              break;
-            }
-        }
-      if (!c)
-        {
-          loadRegFromConst (hc08_reg_h, 0);
-          loadRegFromConst (hc08_reg_x, 0);
-          break;
-        }
-      emitcode ("ldhx", "!immedword", c);
-      regalloc_dry_run_cost += 3;
-      break;
-    case XA_IDX:
-      c &= 0xffff;
-      if (reg->isLitConst && reg->litConst == c)
-	break;
-      loadRegFromConst (hc08_reg_a, c);
-      loadRegFromConst (hc08_reg_x, c >> 8);
-      break;
     default:
       werror (E_INTERNAL_ERROR, __FILE__, __LINE__, "Bad rIdx in loadRegFromConst");
       return;
@@ -1303,42 +833,11 @@ loadRegFromImm (reg_info * reg, char * c)
     c++;
   switch (reg->rIdx)
     {
-    case A_IDX:
-      emitcode ("lda", "#%s", c);
-      regalloc_dry_run_cost += 2;
-      break;
     case X_IDX:
       emitcode ("ldx", "#%s", c);
       regalloc_dry_run_cost += 2;
       break;
-    case H_IDX:
-      if (hc08_reg_a->isFree)
-        {
-          loadRegFromImm (hc08_reg_a, c);
-          transferRegReg (hc08_reg_a, hc08_reg_h, TRUE);
-        }
-      else if (hc08_reg_x->isFree)
-        {
-          loadRegFromImm (hc08_reg_x, c);
-          transferRegReg (hc08_reg_x, hc08_reg_h, TRUE);
-        }
-      else
-        {
-          pushReg (hc08_reg_a, TRUE);
-          loadRegFromImm (hc08_reg_a, c);
-          transferRegReg (hc08_reg_a, hc08_reg_h, TRUE);
-          pullReg (hc08_reg_a);
-        }
-      break;
-    case HX_IDX:
-      emitcode ("ldhx", "#%s", c);
-      regalloc_dry_run_cost += 3;
-      break;
-    case XA_IDX:
-      emitcode ("lda", "#%s", c);
-      emitcode ("ldx", "#%s >> 8", c);
-      regalloc_dry_run_cost += 4;
-      break;
+
     default:
       werror (E_INTERNAL_ERROR, __FILE__, __LINE__, "Bad rIdx in loadRegFromConst");
       return;
@@ -1530,38 +1029,8 @@ storeRegToFullAop (reg_info *reg, asmop *aop, bool isSigned)
 
   switch (regidx)
     {
-    case A_IDX:
     case X_IDX:
-    case H_IDX:
-      storeRegToAop (reg, aop, 0);
-      if (size > 1 && isSigned && aop->type == AOP_REG && aop->aopu.aop_reg[0]->rIdx == A_IDX)
-        pushReg (hc08_reg_a, TRUE);
-      storeRegSignToUpperAop (reg, aop, 1, isSigned);
-      if (size > 1 && isSigned && aop->type == AOP_REG && aop->aopu.aop_reg[0]->rIdx == A_IDX)
-        pullReg (hc08_reg_a);
-      break;
-    case HX_IDX:
-      if (size == 1)
-        {
-          storeRegToAop (hc08_reg_x, aop, 0);
-        }
-      else
-        {
-          storeRegToAop (reg, aop, 0);
-          storeRegSignToUpperAop (hc08_reg_h, aop, 2, isSigned);
-        }
-      break;
-    case XA_IDX:
-      if (size == 1)
-        {
-          storeRegToAop (hc08_reg_a, aop, 0);
-        }
-      else
-        {
-          storeRegToAop (reg, aop, 0);
-          storeRegSignToUpperAop (hc08_reg_x, aop, 2, isSigned);
-        }
-      break;
+
     default:
       wassert (0);
     }
@@ -1727,14 +1196,7 @@ rmwWithReg (char *rmwop, reg_info * reg)
   char rmwbuf[10];
   char *rmwaop = rmwbuf;
 
-  if (reg->rIdx == A_IDX)
-    {
-      sprintf (rmwaop, "%sa", rmwop);
-      emitcode (rmwaop, "");
-      regalloc_dry_run_cost++;
-      hc08_dirtyReg (hc08_reg_a, FALSE);
-    }
-  else if (reg->rIdx == X_IDX)
+  if (reg->rIdx == X_IDX)
     {
       sprintf (rmwaop, "%sx", rmwop);
       emitcode (rmwaop, "");
@@ -1839,30 +1301,6 @@ loadRegIndexed (reg_info * reg, int offset, char * rematOfs)
 
   switch (reg->rIdx)
     {
-    case A_IDX:
-      if (rematOfs)
-        {
-          if (!offset)
-            emitcode ("lda", "(%s),x", rematOfs);
-          else
-            emitcode ("lda", "(%s+%d),x", rematOfs, offset);
-          regalloc_dry_run_cost += 3;
-        }
-      else if (offset)
-        {
-          emitcode ("lda", "%d,x", offset);
-          if (offset > 1 && offset <= 0xff)
-            regalloc_dry_run_cost += 2;
-          else
-            regalloc_dry_run_cost += 3;
-        }
-      else
-        {
-          emitcode ("lda", ",x");
-          regalloc_dry_run_cost++;
-        }
-      hc08_dirtyReg (reg, FALSE);
-      break;
     case X_IDX:
       if (rematOfs)
         {
@@ -1887,50 +1325,7 @@ loadRegIndexed (reg_info * reg, int offset, char * rematOfs)
         }
       hc08_dirtyReg (reg, FALSE);
       break;
-    case H_IDX:
-      needpula = pushRegIfUsed (hc08_reg_a);
-      loadRegIndexed (hc08_reg_a, offset, rematOfs);
-      transferRegReg (hc08_reg_a, hc08_reg_h, TRUE);
-      pullOrFreeReg (hc08_reg_a, needpula);
-      break;
-    case HX_IDX:
-      if (!IS_S08)
-        {
-          needpula = pushRegIfUsed (hc08_reg_a);
-          loadRegIndexed (hc08_reg_a, offset, rematOfs);
-          pushReg (hc08_reg_a, TRUE);
-          loadRegIndexed (hc08_reg_x, offset+1, rematOfs);
-          pullReg (hc08_reg_h);
-          pullOrFreeReg (hc08_reg_a, needpula);
-          break;
-        }
-      else if (rematOfs)
-        {
-          if (!offset)
-            emitcode ("ldhx", "(%s),x", rematOfs);
-          else
-            emitcode ("ldhx", "(%s+%d),x", rematOfs, offset);
-          regalloc_dry_run_cost += 4;
-        }
-      else if (offset)
-        {
-          emitcode ("ldhx", "%d,x", offset);
-          if (offset > 1 && offset <= 0xff)
-            regalloc_dry_run_cost += 3;
-          else
-            regalloc_dry_run_cost += 4;
-        }
-      else
-        {
-          emitcode ("ldhx", ",x");
-          regalloc_dry_run_cost += 2;
-        }
-      hc08_dirtyReg (reg, FALSE);
-      break;
-    case XA_IDX:
-      loadRegIndexed (hc08_reg_a, offset+1, rematOfs);
-      loadRegIndexed (hc08_reg_x, offset, rematOfs);
-      break;
+
     default:
       wassert (0);
     }
@@ -1958,29 +1353,6 @@ storeRegIndexed (reg_info * reg, int offset, char * rematOfs)
 
   switch (reg->rIdx)
     {
-    case A_IDX:
-      if (rematOfs)
-        {
-          if (!offset)
-            emitcode ("sta", "(%s),x", rematOfs);
-          else
-            emitcode ("sta", "(%s+%d),x", rematOfs, offset);
-          regalloc_dry_run_cost += 3;
-        }
-      else if (offset)
-        {
-          emitcode ("sta", "%d,x", offset);
-          if (offset > 1 && offset <= 0xff)
-            regalloc_dry_run_cost += 2;
-          else
-            regalloc_dry_run_cost += 3;
-        }
-      else
-        {
-          emitcode ("sta", ",x");
-          regalloc_dry_run_cost++;
-        }
-      break;
     case X_IDX:
       if (rematOfs)
         {
@@ -2004,21 +1376,7 @@ storeRegIndexed (reg_info * reg, int offset, char * rematOfs)
           regalloc_dry_run_cost++;
         }
       break;
-    case H_IDX:
-      needpula = pushRegIfUsed (hc08_reg_a);
-      transferRegReg (hc08_reg_h, hc08_reg_a, TRUE);
-      storeRegIndexed (hc08_reg_a, offset, rematOfs);
-      pullOrFreeReg (hc08_reg_a, needpula);
-      break;
-    case HX_IDX:
-      storeRegIndexed (hc08_reg_h, offset, rematOfs);
-      storeRegIndexed (hc08_reg_x, offset+1, rematOfs);
-      break;
-    case XA_IDX:
-      /* This case probably won't happen, but it's easy to implement */
-      storeRegIndexed (hc08_reg_x, offset, rematOfs);
-      storeRegIndexed (hc08_reg_a, offset+1, rematOfs);
-      break;
+
     default:
       wassert (0);
     }
