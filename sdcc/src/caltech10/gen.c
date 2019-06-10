@@ -382,9 +382,7 @@ loadRegFromConst (reg_info * reg, int c)
             }
         }
 
-      if (hc08_reg_a->isLitConst && hc08_reg_a->litConst == c)
-        transferRegReg (hc08_reg_a, reg, FALSE);
-      else if (!c)
+      if (!c)
         {
           emitcode ("clrx", "");
           regalloc_dry_run_cost++;
@@ -450,11 +448,6 @@ storeConstToAop (int c, asmop * aop, int loffset)
     }
 
   /* If the value needed is already in A or X, just store it */
-  if (hc08_reg_a->isLitConst && hc08_reg_a->litConst == c)
-    {
-      storeRegToAop (hc08_reg_a, aop, loffset);
-      return;
-    }
   if (hc08_reg_x->isLitConst && hc08_reg_x->litConst == c)
     {
       storeRegToAop (hc08_reg_x, aop, loffset);
@@ -487,7 +480,6 @@ storeConstToAop (int c, asmop * aop, int loffset)
     case AOP_DUMMY:
       break;
     default:
-      if (hc08_reg_a->isFree)
         {
           loadRegFromConst (hc08_reg_a, c);
           storeRegToAop (hc08_reg_a, aop, loffset);
@@ -547,25 +539,11 @@ storeImmToAop (char *c, asmop * aop, int loffset)
     case AOP_DUMMY:
       break;
     default:
-      if (hc08_reg_a->isFree)
-        {
-          loadRegFromImm (hc08_reg_a, c);
-          storeRegToAop (hc08_reg_a, aop, loffset);
-          hc08_freeReg (hc08_reg_a);
-        }
-      else if (hc08_reg_x->isFree)
+      if (hc08_reg_x->isFree)
         {
           loadRegFromImm (hc08_reg_x, c);
           storeRegToAop (hc08_reg_x, aop, loffset);
           hc08_freeReg (hc08_reg_x);
-        }
-      else
-        {
-          pushReg (hc08_reg_a, TRUE);
-          loadRegFromImm (hc08_reg_a, c);
-          storeRegToAop (hc08_reg_a, aop, loffset);
-          pullReg (hc08_reg_a);
-        }
     }
 }
 
@@ -595,15 +573,11 @@ storeRegSignToUpperAop (reg_info * reg, asmop * aop, int loffset, bool isSigned)
   else
     {
       /* Signed case */
-      transferRegReg (reg, hc08_reg_a, FALSE);
       emitcode ("rola", "");
       emitcode ("clra", "");
       emitcode ("sbc", "#0");
       regalloc_dry_run_cost += 4;
-      hc08_useReg (hc08_reg_a);
       while (loffset < size)
-        storeRegToAop (hc08_reg_a, aop, loffset++);
-      hc08_freeReg (hc08_reg_a);
     }
 }
 
@@ -693,29 +667,16 @@ transferAopAop (asmop *srcaop, int srcofs, asmop *dstaop, int dstofs)
       keepreg = TRUE;
     }
 
-  afree = hc08_reg_a->isFree;
 
   if (!reg)
     {
-      if (hc08_reg_a->isFree)
-        reg = hc08_reg_a;
-      else if (hc08_reg_x->isFree)
+      if (hc08_reg_x->isFree)
         reg = hc08_reg_x;
-      else
-        {
-          pushReg (hc08_reg_a, TRUE);
-          needpula = TRUE;
-          reg = hc08_reg_a;
-        }
     }
 
   loadRegFromAop (reg, srcaop, srcofs);
   storeRegToAop (reg, dstaop, dstofs);
 
-  if (!keepreg)
-    pullOrFreeReg (hc08_reg_a, needpula);
-
-  hc08_reg_a->isFree = afree;
 }
 
 
@@ -728,8 +689,6 @@ accopWithMisc (char *accop, char *param)
 {
   emitcode (accop, "%s", param);
   regalloc_dry_run_cost += ((!param[0] || !strcmp(param, ",x")) ? 1 : ((param[0]=='#' || param[0]=='*') ? 2 : 3));
-  if (strcmp (accop, "bit") && strcmp (accop, "cmp") && strcmp (accop, "cpx"))
-    hc08_dirtyReg (hc08_reg_a, FALSE);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -770,8 +729,6 @@ accopWithAop (char *accop, asmop *aop, int loffset)
         regalloc_dry_run_cost += 3;
     }
 
-  if (strcmp (accop, "bit") && strcmp (accop, "cmp") && strcmp (accop, "cpx"))
-    hc08_dirtyReg (hc08_reg_a, FALSE);
 }
 
 
@@ -825,11 +782,8 @@ rmwWithAop (char *rmwop, asmop * aop, int loffset)
   /*   use A if it's free,  */
   /*   otherwise use X if it's free */
   /*   otherwise use A (and preserve original value via the stack) */
-  if (!hc08_reg_a->isFree && hc08_reg_x->isFree)
+  if (hc08_reg_x->isFree)
     reg = hc08_reg_x;
-  else
-    reg = hc08_reg_a;
-
   switch (aop->type)
     {
     case AOP_REG:
@@ -1873,9 +1827,6 @@ asmopToBool (asmop *aop, bool resultInA)
   wassert (aop);
   type = operandType (AOP_OP (aop));
   isFloat = IS_FLOAT (type);
-
-  if (resultInA)
-    hc08_freeReg (hc08_reg_a);
 
   if (IS_BOOL (type))
     {
