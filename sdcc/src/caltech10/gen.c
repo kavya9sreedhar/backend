@@ -34,7 +34,7 @@
 #include <ctype.h>
 
 #include "common.h"
-#include "hc08.h"
+#include "caltech10.h"
 #include "ralloc.h"
 #include "gen.h"
 #include "dbuf_string.h"
@@ -760,7 +760,7 @@ forceload:
               regalloc_dry_run_cost += (aop->type == AOP_DIR ? 2 : 3);
               hc08_dirtyReg (reg, FALSE);
             }
-          else 
+          else
             {
               loadRegFromConst (hc08_reg_h, 0);
               loadRegFromAop (hc08_reg_x, aop, loffset);
@@ -887,7 +887,7 @@ loadRegHXAfromAop(asmop * aopH, int ofsH, asmop * aopX, int ofsX, asmop * aopA, 
         loadRegFromAop (hc08_reg_a, aopA, ofsA);
       return;
     }
-    
+
   /* Either A needs to be loaded first or the order no longer matters */
   if (aopA)
     loadRegFromAop (hc08_reg_a, aopA, ofsA);
@@ -1612,7 +1612,7 @@ transferAopAop (asmop *srcaop, int srcofs, asmop *dstaop, int dstofs)
       storeConstToAop (byteOfVal (srcaop->aopu.aop_lit, srcofs), dstaop, dstofs);
       return;
     }
-    
+
   if ((dstaop->type == AOP_DIR) && (srcaop->type == AOP_DIR))
     {
       const char *src = aopAdrStr (srcaop, srcofs, FALSE);
@@ -2735,7 +2735,7 @@ aopOpExtToIdx(asmop * result, asmop *left, asmop *right)
     accesses += right->size;
   if (accesses<2)
     return;
-  
+
   /* If an operand is already using or going to H or X then we cannot */
   /* use indexed addressing mode at the same time. */
   if (result && (IS_AOP_WITH_H (result) || IS_AOP_WITH_X (result)))
@@ -2777,7 +2777,7 @@ aopOpExtToIdx(asmop * result, asmop *left, asmop *right)
       winner = right;
     }
 
-  /* Make sure there were enough accesses of a single variable to be worthwhile. */ 
+  /* Make sure there were enough accesses of a single variable to be worthwhile. */
   if (winnerAccesses < 2)
     return;
 
@@ -2807,7 +2807,7 @@ aopAdrStr (asmop * aop, int loffset, bool bit16)
      size then zero */
   if (loffset > (aop->size - 1) && aop->type != AOP_LIT)
     return zero;
-  
+
   /* depending on type */
   switch (aop->type)
     {
@@ -2913,7 +2913,7 @@ getDataSize (operand *op)
 static void
 asmopToBool (asmop *aop, bool resultInA)
 {
-  bool isFloat; 
+  bool isFloat;
   symbol *tlbl, *tlbl1;
   int size = aop->size;
   bool needpula = FALSE;
@@ -2992,7 +2992,7 @@ asmopToBool (asmop *aop, bool resultInA)
                   emitcode ("pulh", ""); // 1 Byte, 2 (hc08) / 3 (s08) cycles.
                   regalloc_dry_run_cost += 1;
                 }
-              
+
             }
         }
       else if (IS_AOP_HX (aop))
@@ -3217,7 +3217,7 @@ genCopy (operand * result, operand * source)
 
    if (IS_HC08 && (size > 2))
      aopOpExtToIdx (AOP (result), NULL, AOP (source));
-    
+
   /* general case */
   /* Copy in msb to lsb order, since some multi-byte hardware registers */
   /* expect this order. */
@@ -3914,7 +3914,7 @@ genPcall (iCode * ic)
     {
       updateiTempRegisterUse (IC_LEFT (sendic));
     }
-  
+
   if (!IS_LITERAL (etype))
     {
       /* push the return address on to the stack */
@@ -4929,7 +4929,7 @@ genMultOneByte (operand * left, operand * right, operand * result)
     emitLabel (tlbl3);
   adjustStack (1);
   storeRegToFullAop (hc08_reg_xa, AOP (result), TRUE);
-  
+
   pullOrFreeReg (hc08_reg_x, needpullx);
   pullOrFreeReg (hc08_reg_a, needpulla);
 }
@@ -6007,7 +6007,7 @@ hasInchc08 (operand *op, const iCode *ic, int osize)
     return NULL;
   if (osize != (isize = getSize (type->next)))
     return NULL;
-  
+
   while (lic)
     {
       /* if operand of the form op = op + <sizeof *op> */
@@ -8300,7 +8300,7 @@ genRightShiftLiteral (operand * left, operand * right, operand * result, iCode *
       bool needpulla = pushRegIfSurv (hc08_reg_a);
       if (sign)
         {
-          
+
           /* get sign in acc.7 */
           loadRegFromAop (hc08_reg_a, AOP (left), size - 1);
         }
@@ -8897,7 +8897,7 @@ genDataPointerGet (operand * left, operand * right, operand * result, iCode * ic
   derefaop = aopDerefAop (AOP (left), litOffset);
   freeAsmop (left, NULL, ic, TRUE);
   derefaop->size = size;
-  
+
   if (ifx)
     needpulla = pushRegIfSurv (hc08_reg_a);
 
@@ -8979,7 +8979,7 @@ genPointerGet (iCode * ic, iCode * pi, iCode * ifx)
   /* it should be marking the pointer (left op) registers dead. */
   /* EEP - 5 Jan 2013 */
   if (AOP_TYPE (left) == AOP_REG && pi)
-    { 
+    {
       int i;
       for (i = 0; i < AOP_SIZE (left); i++)
         AOP (left)->aopu.aop_reg[i]->isDead = TRUE;
@@ -9552,7 +9552,7 @@ genPointerSet (iCode * ic, iCode * pi)
         }
     }
   if (AOP_TYPE (result) == AOP_REG && pi)
-    { 
+    {
       int i;
       for (i = 0; i < AOP_SIZE (result); i++)
         AOP (result)->aopu.aop_reg[i]->isDead = TRUE;
@@ -9661,7 +9661,7 @@ static void
 genIfx (iCode * ic, iCode * popIc)
 {
   operand *cond = IC_COND (ic);
-  
+
   D (emitcode (";     genIfx", ""));
 
   aopOp (cond, ic, FALSE);
@@ -9824,7 +9824,7 @@ genAssignLit (operand * result, operand * right)
 
   if ((AOP_TYPE (result) != AOP_DIR ) && IS_HC08)
     canUseHX = FALSE;
-    
+
   if (canUseHX)
     {
       /* Assign words that are already in HX */
@@ -9867,7 +9867,7 @@ genAssignLit (operand * result, operand * right)
 
   if (remaining > 2)
     aopOpExtToIdx (AOP (result), NULL, NULL);
-  
+
   /* Assign bytes that are already in A and/or X */
   for (offset=size-1; offset>=0; offset--)
     {
@@ -9920,7 +9920,7 @@ genAssignLit (operand * result, operand * right)
             }
         }
     }
-    
+
   /* Assign whatever remains to be assigned */
   for (offset=size-1; offset>=0; offset--)
     {
@@ -9947,7 +9947,7 @@ genAssign (iCode * ic)
 
   result = IC_RESULT (ic);
   right = IC_RIGHT (ic);
-  
+
   aopOp (right, ic, FALSE);
   aopOp (result, ic, TRUE);
 
@@ -10138,7 +10138,7 @@ genCast (iCode * ic)
     }
 
   wassert (AOP (result)->type != AOP_REG);
-  
+
   save_a = !hc08_reg_a->isDead && signExtend;
   if (save_a)
     pushReg(hc08_reg_a, TRUE);
@@ -10156,7 +10156,7 @@ genCast (iCode * ic)
           offset++;
           size--;
         }
-      else if ((size > 2 || size >= 2 && !signExtend) && hc08_reg_h->isDead && hc08_reg_x->isDead && 
+      else if ((size > 2 || size >= 2 && !signExtend) && hc08_reg_h->isDead && hc08_reg_x->isDead &&
         (AOP_TYPE (right) == AOP_IMMD || IS_S08 && AOP_TYPE (right) == AOP_EXT) &&
         (AOP_TYPE (result) == AOP_DIR || IS_S08 && AOP_TYPE (result) == AOP_EXT))
         {
@@ -10729,7 +10729,7 @@ dryhc08iCode (iCode *ic)
   regalloc_dry_run_cost = 0;
 
   init_aop_pass();
-  
+
   genhc08iCode (ic);
 
   destroy_line_list ();
@@ -10846,4 +10846,3 @@ genhc08Code (iCode *lic)
   /* destroy the line list */
   destroy_line_list ();
 }
-

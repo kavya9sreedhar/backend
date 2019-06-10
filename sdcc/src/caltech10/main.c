@@ -22,7 +22,7 @@
     it easier to set a breakpoint using the debugger.
 */
 #include "common.h"
-#include "hc08.h"
+#include "caltech10.h"
 #include "main.h"
 #include "ralloc.h"
 #include "gen.h"
@@ -768,97 +768,84 @@ typedef struct hc08opcodedata
   }
 hc08opcodedata;
 
-#define HC08OP_STD 1
-#define HC08OP_RMW 2
-#define HC08OP_INH 3
-#define HC08OP_IM1 4
-#define HC08OP_BR 5
-#define HC08OP_BTB 6
-#define HC08OP_BSC 7
-#define HC08OP_MOV 8
-#define HC08OP_CBEQ 9
-#define HC08OP_CPHX 10
-#define HC08OP_LDHX 11
-#define HC08OP_STHX 12
-#define HC08OP_DBNZ 13
+#define CALTECH10OP_STD 1
 
 /* These must be kept sorted by opcode name */
 static hc08opcodedata hc08opcodeDataTable[] =
   {
-    {".db",   HC08OP_INH}, /* used by the code generator only in the jump table */
-      // do we need this?
-    {"adc",   HC08OP_STD},
-    {"adci", },
-    {"add",   HC08OP_STD},
-    {"addi"},
-    {"and"},
-    {"andi"},
-    {"asr",   HC08OP_RMW},
-    {"cmp",   HC08OP_STD},
-    {"cmpi"},
-    {"dec",   HC08OP_RMW},
-    {"inc",   HC08OP_RMW},
-    {"lsl",   HC08OP_RMW},
-    {"lsr",   HC08OP_RMW},
-    {"neg",   HC08OP_RMW},
-    {"not"},
-    {"or"},
-    {"ori"},
-    {"rlc"},
-    {"rol"},
-    {"ror"},
-    {"rrc"},
-    {"sbb"},
-    {"sbbi"},
-    {"sub"},
-    {"subi"},
-    {"tst"},
-    {"tsti"},
-    {"xor"},
-    {"xori"},
-    {"sti"},
-    {"cli"},
-    {"stu"},
-    {"clu"},
-    {"stc"},
-    {"clc"},
-    {"tax"},
-    {"txa"},
-    {"inx"},
-    {"dex"},
-    {"tas"},
-    {"tsa"},
-    {"ins"},
-    {"des"},
-    {"ldi"},
-    {"ldd"},
-    {"ld"},
-    {"std"},
-    {"st"},
-    {"jmp"},
-    {"ja"},
-    {"jae"},
-    {"jb"},
-    {"jbe"},
-    {"je"},
-    {"jg"},
-    {"jge"},
-    {"jl"},
-    {"jle"},
-    {"jne"},
-    {"jns"},
-    {"jnu"},
-    {"jnv"},
-    {"js"},
-    {"ju"},
-    {"jv"},
-    {"call"},
-    {"rts"},
-    {"popf"},
-    {"pushf"},
-    {"in"},
-    {"out"},
-    {"nop"}
+    {".db",  CALTECH10OP_STD}, /* used by the code generator only in the jump table */
+    {"adc",  CALTECH10OP_STD},
+    {"adci", CALTECH10OP_STD},
+    {"add",  CALTECH10OP_STD},
+    {"addi", CALTECH10OP_STD},
+    {"and",  CALTECH10OP_STD},
+    {"andi", CALTECH10OP_STD},
+    {"asr",  CALTECH10OP_STD},
+    {"cmp",  CALTECH10OP_STD},
+    {"cmpi", CALTECH10OP_STD},
+    {"dec",  CALTECH10OP_STD},
+    {"inc",  CALTECH10OP_STD},
+    {"lsl",  CALTECH10OP_STD},
+    {"lsr",  CALTECH10OP_STD},
+    {"neg",  CALTECH10OP_STD},
+    {"not",  CALTECH10OP_STD},
+    {"or",  CALTECH10OP_STD},
+    {"ori", CALTECH10OP_STD},
+    {"rlc", CALTECH10OP_STD},
+    {"rol", CALTECH10OP_STD},
+    {"ror", CALTECH10OP_STD},
+    {"rrc", CALTECH10OP_STD},
+    {"sbb", CALTECH10OP_STD},
+    {"sbbi", CALTECH10OP_STD},
+    {"sub",  CALTECH10OP_STD},
+    {"subi", CALTECH10OP_STD},
+    {"tst", CALTECH10OP_STD},
+    {"tsti", CALTECH10OP_STD},
+    {"xor", CALTECH10OP_STD},
+    {"xori", CALTECH10OP_STD},
+    {"sti", CALTECH10OP_STD},
+    {"cli", CALTECH10OP_STD},
+    {"stu", CALTECH10OP_STD},
+    {"clu", CALTECH10OP_STD},
+    {"stc", CALTECH10OP_STD},
+    {"clc", CALTECH10OP_STD},
+    {"tax", CALTECH10OP_STD},
+    {"txa", CALTECH10OP_STD},
+    {"inx", CALTECH10OP_STD},
+    {"dex", CALTECH10OP_STD},
+    {"tas", CALTECH10OP_STD},
+    {"tsa", CALTECH10OP_STD},
+    {"ins", CALTECH10OP_STD},
+    {"des", CALTECH10OP_STD},
+    {"ldi", CALTECH10OP_STD},
+    {"ldd", CALTECH10OP_STD},
+    {"ld", CALTECH10OP_STD},
+    {"std", CALTECH10OP_STD},
+    {"st", CALTECH10OP_STD},
+    {"jmp", CALTECH10OP_STD},
+    {"ja", CALTECH10OP_STD},
+    {"jae", CALTECH10OP_STD},
+    {"jb",  CALTECH10OP_STD},
+    {"jbe",  CALTECH10OP_STD},
+    {"je", CALTECH10OP_STD},
+    {"jg", CALTECH10OP_STD},
+    {"jge", CALTECH10OP_STD},
+    {"jl", CALTECH10OP_STD},
+    {"jle", CALTECH10OP_STD},
+    {"jne", CALTECH10OP_STD},
+    {"jns", CALTECH10OP_STD},
+    {"jnu", CALTECH10OP_STD},
+    {"jnv", CALTECH10OP_STD},
+    {"js", CALTECH10OP_STD},
+    {"ju", CALTECH10OP_STD},
+    {"jv", CALTECH10OP_STD},
+    {"call", CALTECH10OP_STD},
+    {"rts", CALTECH10OP_STD},
+    {"popf", CALTECH10OP_STD},
+    {"pushf", CALTECH10OP_STD},
+    {"in", CALTECH10OP_STD},
+    {"out", CALTECH10OP_STD},
+    {"nop", CALTECH10OP_STD}
   };
 
 static int
@@ -887,91 +874,8 @@ hc08_instructionSize(const char *inst, const char *op1, const char *op2)
 
   if (!opcode)
     return 999;
-  switch (opcode->adrmode)
-    {
-      case HC08OP_INH: /* Inherent addressing mode */
-        return 1;
 
-      case HC08OP_BSC: /* Bit set/clear direct addressing mode */
-      case HC08OP_BR:  /* Branch (1 byte signed offset) */
-      case HC08OP_IM1: /* 1 byte immediate addressing mode */
-        return 2;
-
-      case HC08OP_BTB:  /* Bit test direct addressing mode and branch */
-        return 3;
-
-      case HC08OP_RMW: /* read/modify/write instructions */
-        if (!op2[0]) /* if not ,x or ,sp must be direct addressing mode */
-          return 2;
-        if (!op1[0])  /* if ,x with no offset */
-          return 1;
-        if (op2[0] == 'x')  /* if ,x with offset */
-          return 2;
-        return 3;  /* Otherwise, must be ,sp with offset */
-
-      case HC08OP_STD: /* standard instruction */
-        if (!op2[0])
-          {
-            if (op1[0] == '#') /* Immediate addressing mode */
-              return 2;
-            if (op1[0] == '*') /* Direct addressing mode */
-              return 2;
-            return 3; /* Otherwise, must be extended addressing mode */
-          }
-        else
-          {
-            if (!op1[0]) /* if ,x with no offset */
-              return 1;
-            size = 2;
-            if (op2[0] == 's')
-              size++;
-            offset = strtol (op1, &endnum, 0) & 0xffff;
-            if (endnum && *endnum)
-              size++;
-            else if (offset > 0xff)
-              size++;
-            return size;
-          }
-      case HC08OP_MOV:
-        if (op2[0] == 'x')
-          return 2;
-        return 3;
-      case HC08OP_CBEQ:
-        if (op2[0] == 'x' && !op1[0])
-          return 2;  /* cbeq ,x+,rel */
-        if (op2[0] == 's')
-          return 4;  /* cbeq oprx8,sp,rel */
-        return 3;
-      case HC08OP_CPHX:
-        if (op1[0] == '*')
-          return 2;
-        return 3;
-      case HC08OP_DBNZ:
-        if (!op2[0])
-          return 2;
-        if (!op1[0] && op2[0] == 'x')
-          return 2;
-        if (op2[0] == 's')
-          return 4;
-        return 3;
-      case HC08OP_LDHX:
-      case HC08OP_STHX:
-        if (op1[0] == '*')
-          return 2;
-        if (!op1[0] && op2[0] == 'x')
-          return 2;
-        if (op2[0] == 's' || op1[0] == '#' || !op2[0])
-          return 3;
-        size = 3;
-        offset = strtol (op1, &endnum, 0) & 0xffff;
-        if (endnum && *endnum)
-          size++;
-        else if (offset > 0xff)
-          size++;
-        return size;
-      default:
-        return 4;
-    }
+  return  4;  // return default value for now
 }
 
 
