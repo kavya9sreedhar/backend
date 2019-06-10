@@ -1615,7 +1615,7 @@ moveSendToCall (iCode *sic, eBBlock *ebp)
   iCode * prev = sic->prev;
   iCode * sic2 = NULL;
   iCode * cic;
-  
+
   /* Go find the CALL/PCALL */
   cic = sic;
   while (cic && cic->op != CALL && cic->op != PCALL)
@@ -1626,7 +1626,7 @@ moveSendToCall (iCode *sic, eBBlock *ebp)
   /* Is there a second SEND? If so, we'll need to move it too. */
   if (sic->next->op == SEND)
     sic2 = sic->next;
-  
+
   /* relocate the SEND(s) */
   remiCodeFromeBBlock (ebp, sic);
   addiCodeToeBBlock (ebp, sic, cic);
@@ -1796,14 +1796,14 @@ packRegisters (eBBlock ** ebpp, int blockno)
   for (ic = ebp->sch; ic; ic = ic->next)
     {
       //packRegsForLiteral (ic);
-      
+
       /* move SEND to immediately precede its CALL/PCALL */
       if (ic->op == SEND && ic->next &&
           ic->next->op != CALL && ic->next->op != PCALL)
         {
           ic = moveSendToCall (ic, ebp);
         }
-      
+
       /* if this is an itemp & result of an address of a true sym
          then mark this as rematerialisable   */
       if (ic->op == ADDRESS_OF &&
@@ -1973,7 +1973,7 @@ replaceAccuseOperand (operand * op)
       sym->regs[0] = hc08_reg_x;
       if (sym->nRegs > 1)
         sym->regs[1] = hc08_reg_h;
-    }  
+    }
   sym->accuse = 0;
 }
 
@@ -2033,14 +2033,8 @@ hc08_oldralloc (ebbIndex * ebbi)
   setToNull ((void *) &_G.regAssigned);
   setToNull ((void *) &_G.totRegAssigned);
   hc08_ptrRegReq = _G.stackExtend = _G.dataExtend = 0;
-  hc08_nRegs = 7;
-  hc08_reg_a = hc08_regWithIdx(A_IDX);
   hc08_reg_x = hc08_regWithIdx(X_IDX);
-  hc08_reg_h = hc08_regWithIdx(H_IDX);
-  hc08_reg_hx = hc08_regWithIdx(HX_IDX);
-  hc08_reg_xa = hc08_regWithIdx(XA_IDX);
-  hc08_reg_sp = hc08_regWithIdx(SP_IDX);
-  hc08_nRegs = 5;
+  hc08_nRegs = 1;
 
   /* change assignments this will remove some
      live ranges reducing some register pressure */
@@ -2243,14 +2237,8 @@ hc08_ralloc (ebbIndex * ebbi)
   setToNull ((void *) &_G.regAssigned);
   setToNull ((void *) &_G.totRegAssigned);
   hc08_ptrRegReq = _G.stackExtend = _G.dataExtend = 0;
-  hc08_nRegs = 7;
-  hc08_reg_a = hc08_regWithIdx(A_IDX);
   hc08_reg_x = hc08_regWithIdx(X_IDX);
-  hc08_reg_h = hc08_regWithIdx(H_IDX);
-  hc08_reg_hx = hc08_regWithIdx(HX_IDX);
-  hc08_reg_xa = hc08_regWithIdx(XA_IDX);
-  hc08_reg_sp = hc08_regWithIdx(SP_IDX);
-  hc08_nRegs = 5;
+  hc08_nRegs = 1;
 
   /* change assignments this will remove some
      live ranges reducing some register pressure */
@@ -2336,4 +2324,3 @@ hc08_assignRegisters (ebbIndex * ebbi)
 #endif
     hc08_ralloc (ebbi);
 }
-

@@ -2490,11 +2490,9 @@ saveRegisters (iCode *lic)
 
   if (!regalloc_dry_run)
     ic->regsSaved = 1;
-  for (i = A_IDX; i <= H_IDX; i++)
-    {
+        i = X_IDX;
       if (bitVectBitValue (ic->rSurv, i))
         pushReg (hc08_regWithIdx (i), FALSE);
-    }
 }
 
 /*-----------------------------------------------------------------*/
@@ -2504,12 +2502,9 @@ static void
 unsaveRegisters (iCode *ic)
 {
   int i;
-
-  for (i = H_IDX; i >= A_IDX; i--)
-    {
+    i = X_IDX;
       if (bitVectBitValue (ic->rSurv, i))
         pullReg (hc08_regWithIdx (i));
-    }
 
 }
 
@@ -3057,8 +3052,6 @@ genFunction (iCode * ic)
             {
               reg_info *reg = hc08_aop_pass[ofs + (ric->argreg - 1)]->aopu.aop_reg[0];
               pushReg (reg, TRUE);
-              if (reg->rIdx == A_IDX)
-                accIsFree = 1;
               stackAdjust--;
             }
           genLine.lineElement.ic = ic;
@@ -3181,7 +3174,7 @@ genEndFunction (iCode * ic)
               /* save the registers used */
               for (i = sym->regsUsed->size; i >= 0; i--)
                 {
-                  if (bitVectBitValue (sym->regsUsed, i) || (hc08_ptrRegReq && (i == HX_IDX || i == HX_IDX)))
+                  if (bitVectBitValue (sym->regsUsed, i))
                     emitcode ("pop", "%s", hc08_regWithIdx (i)->name); /* Todo: Cost. Can't find this instruction in manual! */
                 }
             }
@@ -3276,15 +3269,13 @@ genLabel (iCode * ic)
 
   /* For the high level labels we cannot depend on any */
   /* register's contents. Amnesia time.                */
-  for (i = A_IDX; i <= XA_IDX; i++)
-    {
+    i = X_IDX;
       reg = hc08_regWithIdx (i);
       if (reg)
         {
           reg->aop = NULL;
           reg->isLitConst = 0;
         }
-    }
 
   /* special case never generate */
   if (IC_LABEL (ic) == entryLabel)
@@ -3490,13 +3481,8 @@ genPlus (iCode * ic)
         }
       else
         skip = TRUE;
-      if (size && AOP_TYPE (IC_RESULT (ic)) == AOP_REG && AOP (IC_RESULT (ic))->aopu.aop_reg[offset]->rIdx == A_IDX)
-        {
-          pushReg (hc08_reg_a, TRUE);
-          delayedstore = TRUE;
-        }
-      else
-        storeRegToAop (hc08_reg_a, AOP (IC_RESULT (ic)), offset);
+
+      storeRegToAop (hc08_reg_a, AOP (IC_RESULT (ic)), offset);
       offset++;
       hc08_freeReg (hc08_reg_a);
       if (!skip)
@@ -3656,31 +3642,10 @@ genMinus (iCode * ic)
 
   while (size--)
     {
-      if (earlystore &&
-        (AOP_TYPE (IC_LEFT (ic)) == AOP_REG && AOP (IC_LEFT (ic))->aopu.aop_reg[offset]->rIdx == A_IDX ||
-        AOP_TYPE (IC_RIGHT (ic)) == AOP_REG && AOP (IC_RIGHT (ic))->aopu.aop_reg[offset]->rIdx == A_IDX))
-        pullReg (hc08_reg_a);
-      if (AOP_TYPE (IC_RIGHT (ic)) == AOP_REG && AOP (IC_RIGHT (ic))->aopu.aop_reg[offset]->rIdx == A_IDX)
-        {
-          pushReg (hc08_reg_a, TRUE);
-          loadRegFromAop (hc08_reg_a, leftOp, offset);
-          emitcode (sub, "1, s");
-          hc08_dirtyReg (hc08_reg_a, FALSE);
-          regalloc_dry_run_cost += 3;
-          pullNull (1);
-        }
-      else
-        {
-          loadRegFromAop (hc08_reg_a, leftOp, offset);
-          accopWithAop (sub, rightOp, offset);
-        }
-      if (size && AOP_TYPE (IC_RESULT (ic)) == AOP_REG && AOP (IC_RESULT (ic))->aopu.aop_reg[offset]->rIdx == A_IDX)
-        {
-          pushReg (hc08_reg_a, TRUE);
-          delayedstore = TRUE;
-        }
-      else
-        storeRegToAop (hc08_reg_a, AOP (IC_RESULT (ic)), offset);
+      loadRegFromAop (hc08_reg_a, leftOp, offset);
+      accopWithAop (sub, rightOp, offset);
+
+      storeRegToAop (hc08_reg_a, AOP (IC_RESULT (ic)), offset);
       offset++;
       sub = "sbc";
     }
@@ -4714,19 +4679,9 @@ genCmp (iCode * ic, iCode * ifx)
       needpulla = pushRegIfSurv (hc08_reg_a);
       while (size--)
         {
-          if (AOP_TYPE (right) == AOP_REG && AOP(right)->aopu.aop_reg[offset]->rIdx == A_IDX)
-            {
-              pushReg (hc08_reg_a, TRUE);
-              loadRegFromAop (hc08_reg_a, AOP (left), offset);
-              emitcode (sub, "1, s");
-              regalloc_dry_run_cost += 3;
-              pullReg (hc08_reg_a);
-            }
-          else
-            {
-              loadRegFromAop (hc08_reg_a, AOP (left), offset);
-              accopWithAop (sub, AOP (right), offset);
-            }
+
+          loadRegFromAop (hc08_reg_a, AOP (left), offset);
+          accopWithAop (sub, AOP (right), offset);
           hc08_freeReg (hc08_reg_a);
           offset++;
           sub = "sbc";
@@ -4847,14 +4802,7 @@ genCmpEQorNE (iCode * ic, iCode * ifx)
             accopWithAop ("cpx", AOP (right), offset);
           else
             {
-              if (!(AOP_TYPE (left) == AOP_REG && AOP (left)->aopu.aop_reg[offset]->rIdx == A_IDX))
-                {
-                  needpulla = pushRegIfSurv (hc08_reg_a);
-                  loadRegFromAop (hc08_reg_a, AOP (left), offset);
-                }
               accopWithAop ("cmp", AOP (right), offset);
-              if (!(AOP_TYPE (left) == AOP_REG && AOP (left)->aopu.aop_reg[offset]->rIdx == A_IDX))
-                pullOrFreeReg (hc08_reg_a, needpulla);
               needpulla = FALSE;
             }
           if (size)
@@ -5344,11 +5292,6 @@ genAnd (iCode * ic, iCode * ifx)
           storeRegToAop (hc08_reg_a, AOP (result), offset);
           hc08_freeReg (hc08_reg_a);
         }
-      if (AOP_TYPE (result) == AOP_REG && size && AOP (result)->aopu.aop_reg[offset]->rIdx == A_IDX)
-        {
-          pushReg (hc08_reg_a, TRUE);
-          needpulla = TRUE;
-        }
       offset++;
     }
 
@@ -5529,11 +5472,6 @@ genOr (iCode * ic, iCode * ifx)
           storeRegToAop (hc08_reg_a, AOP (result), offset);
           hc08_freeReg (hc08_reg_a);
         }
-      if (AOP_TYPE (result) == AOP_REG && size && AOP (result)->aopu.aop_reg[offset]->rIdx == A_IDX)
-        {
-          pushReg (hc08_reg_a, TRUE);
-          needpulla = TRUE;
-        }
       offset++;
     }
 
@@ -5639,11 +5577,6 @@ genXor (iCode * ic, iCode * ifx)
       loadRegFromAop (hc08_reg_a, AOP (left), offset);
       accopWithAop ("eor", AOP (right), offset);
       storeRegToAop (hc08_reg_a, AOP (result), offset);
-      if (AOP_TYPE (result) == AOP_REG && size && AOP (result)->aopu.aop_reg[offset]->rIdx == A_IDX)
-        {
-          pushReg (hc08_reg_a, TRUE);
-          needpulla = TRUE;
-        }
       hc08_freeReg (hc08_reg_a);
       offset++;
     }
@@ -5817,9 +5750,6 @@ genRRC (iCode * ic)
   aopOp (left, ic, FALSE);
   aopOp (result, ic, FALSE);
 
-  if ((AOP_TYPE (result) == AOP_REG) && (AOP (result)->aopu.aop_reg[0]->rIdx == A_IDX))
-    resultInA = TRUE;
-
   size = AOP_SIZE (result);
   offset = size - 1;
 
@@ -5894,9 +5824,6 @@ genRLC (iCode * ic)
   result = IC_RESULT (ic);
   aopOp (left, ic, FALSE);
   aopOp (result, ic, FALSE);
-
-  if ((AOP_TYPE (result) == AOP_REG) && (AOP (result)->aopu.aop_reg[0]->rIdx == A_IDX))
-    resultInA = TRUE;
 
   size = AOP_SIZE (result);
   offset = 0;
@@ -7665,8 +7592,6 @@ genUnpackBitsImmed (operand * left, operand *right, operand * result, iCode * ic
           if (!regalloc_dry_run)
             emitLabel (tlbl);
           storeRegToAop (hc08_reg_a, AOP (result), offset);
-          if (AOP_TYPE (result) == AOP_REG && AOP(result)->aopu.aop_reg[offset]->rIdx == A_IDX)
-            assigned_a = TRUE;
           hc08_freeReg (hc08_reg_a);
           offset++;
           goto finish;
@@ -7723,8 +7648,6 @@ genUnpackBitsImmed (operand * left, operand *right, operand * result, iCode * ic
                 emitLabel (tlbl);
             }
           storeRegToAop (hc08_reg_a, AOP (result), offset);
-          if (AOP_TYPE (result) == AOP_REG && AOP(result)->aopu.aop_reg[offset]->rIdx == A_IDX)
-            assigned_a = TRUE;
         }
       else
         {
@@ -7749,8 +7672,6 @@ genUnpackBitsImmed (operand * left, operand *right, operand * result, iCode * ic
       if (!ifx)
         {
           storeRegToAop (hc08_reg_a, AOP (result), offset);
-          if (AOP_TYPE (result) == AOP_REG && AOP(result)->aopu.aop_reg[offset]->rIdx == A_IDX)
-            assigned_a = TRUE;
         }
       else
         {
@@ -7785,8 +7706,6 @@ genUnpackBitsImmed (operand * left, operand *right, operand * result, iCode * ic
             emitLabel (tlbl);
         }
       storeRegToAop (hc08_reg_a, AOP (result), offset);
-      if (AOP_TYPE (result) == AOP_REG && AOP(result)->aopu.aop_reg[offset]->rIdx == A_IDX)
-        assigned_a = TRUE;
       offset++;
     }
 
@@ -8541,8 +8460,7 @@ genPointerSet (iCode * ic, iCode * pi)
         {
           if (vol)
             {
-              if (AOP (right)->aopu.aop_reg[0]->rIdx != A_IDX)
-                needpulla = pushRegIfSurv (hc08_reg_a);
+              needpulla = pushRegIfSurv (hc08_reg_a);
               pushReg (AOP (right)->aopu.aop_reg[0], TRUE);
               pushReg (AOP (right)->aopu.aop_reg[1], TRUE);
               loadRegFromAop (hc08_reg_hx, AOP (result), 0);
@@ -9396,15 +9314,13 @@ genhc08iCode (iCode *ic)
     initGenLineElement ();
     genLine.lineElement.ic = ic;
 
-    for (i = A_IDX; i <= XA_IDX; i++)
-      {
+        i = X_IDX;
         reg = hc08_regWithIdx (i);
         //if (reg->aop)
         //  emitcode ("", "; %s = %s offset %d", reg->name, aopName (reg->aop), reg->aopofs);
         reg->isFree = TRUE;
         if (regalloc_dry_run)
           reg->isLitConst = 0;
-      }
 
     if (ic->op == IFX)
       updateiTempRegisterUse (IC_COND (ic));
@@ -9423,8 +9339,7 @@ genhc08iCode (iCode *ic)
         updateiTempRegisterUse (IC_RIGHT (ic));
       }
 
-    for (i = A_IDX; i <= H_IDX; i++)
-      {
+          i = X_IDX;
         if (bitVectBitValue (ic->rSurv, i))
           {
             hc08_regWithIdx (i)->isDead = FALSE;
@@ -9432,7 +9347,6 @@ genhc08iCode (iCode *ic)
           }
         else
           hc08_regWithIdx (i)->isDead = TRUE;
-      }
   }
 
   /* depending on the operation */
@@ -9763,8 +9677,6 @@ genhc08Code (iCode *lic)
           char regsSurv[4];
           const char *iLine;
 
-          regsSurv[0] = (bitVectBitValue (ic->rSurv, A_IDX)) ? 'a' : '-';
-          regsSurv[1] = (bitVectBitValue (ic->rSurv, H_IDX)) ? 'h' : '-';
           regsSurv[2] = (bitVectBitValue (ic->rSurv, X_IDX)) ? 'x' : '-';
           regsSurv[3] = 0;
           iLine = printILine (ic);

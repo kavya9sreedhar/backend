@@ -728,11 +728,7 @@ hc08_dwarfRegNum (const struct reg_info *reg)
 {
   switch (reg->rIdx)
     {
-    case A_IDX: return 0;
-    case H_IDX: return 1;
     case X_IDX: return 2;
-    case CND_IDX: return 17;
-    case SP_IDX: return 15;
     }
   return -1;
 }
