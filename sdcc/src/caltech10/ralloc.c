@@ -106,18 +106,6 @@ hc08_freeReg (reg_info * reg)
     }
 
   reg->isFree = 1;
-
-  switch (reg->rIdx)
-    {
-      case X_IDX:
-        if (hc08_reg_a->isFree)
-          hc08_reg_xa->isFree = 1;
-        if (hc08_reg_h->isFree)
-          hc08_reg_hx->isFree = 1;
-        break;
-      default:
-        break;
-    }
 }
 
 
@@ -129,17 +117,6 @@ hc08_useReg (reg_info * reg)
 {
   reg->isFree = 0;
 
-  switch (reg->rIdx)
-    {
-      case X_IDX:
-        hc08_reg_xa->aop = NULL;
-        hc08_reg_xa->isFree = 0;
-        hc08_reg_hx->aop = NULL;
-        hc08_reg_hx->isFree = 0;
-        break;
-      default:
-        break;
-    }
 }
 
 /*-----------------------------------------------------------------*/
@@ -153,10 +130,6 @@ hc08_dirtyReg (reg_info * reg, bool freereg)
   switch (reg->rIdx)
     {
       case X_IDX:
-        hc08_reg_xa->aop = NULL;
-	hc08_reg_xa->isLitConst = 0;
-        hc08_reg_hx->aop = NULL;
-	hc08_reg_hx->isLitConst = 0;
 	hc08_reg_x->aop = NULL;
 	hc08_reg_x->isLitConst = 0;
         break;
@@ -1964,15 +1937,12 @@ replaceAccuseOperand (operand * op)
 
   if (sym->accuse == ACCUSE_XA)
     {
-      sym->regs[0] = hc08_reg_a;
       if (sym->nRegs > 1)
         sym->regs[1] = hc08_reg_x;
     }
   else /* must be sym->accuse == ACCUSE_HX */
     {
       sym->regs[0] = hc08_reg_x;
-      if (sym->nRegs > 1)
-        sym->regs[1] = hc08_reg_h;
     }
   sym->accuse = 0;
 }
